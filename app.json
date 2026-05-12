@@ -10,6 +10,11 @@
     ],
     "android": {
       "package": "com.anonymous.eventosbarranquilla"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "24d217a1-9814-4e89-9d0e-d0a3b54412db"
+      }
     }
   }
 }
