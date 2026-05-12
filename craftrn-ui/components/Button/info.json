@@ -1,0 +1,7 @@
+{
+  "name": "Button",
+  "description": "Button component with multiple variants and sizes",
+  "externalDependencies": ["react-native-reanimated", "react-native-unistyles"],
+  "craftrnUiComponents": ["PressableScale", "Text"],
+  "tetrislyIcons": []
+}

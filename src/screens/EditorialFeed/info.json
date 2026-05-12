@@ -1,0 +1,37 @@
+{
+  "name": "EditorialFeed",
+  "description": "Editorial feed template with cards and carousel",
+  "externalDependencies": [
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-unistyles"
+  ],
+  "craftrnUiComponents": [
+    "Avatar",
+    "BottomSheet",
+    "ButtonRound",
+    "Card",
+    "ListItem",
+    "Text"
+  ],
+  "tetrislyIcons": ["Block", "Close", "MoreHorizontal", "Settings"],
+  "fileStructure": {
+    "Card.tsx": "file",
+    "Categories.tsx": "file",
+    "EditorialFeedScreen.tsx": "file",
+    "Gradient.tsx": "file",
+    "Header.tsx": "file",
+    "info.json": "file",
+    "AGENTS.md": "file",
+    "ProfileBottomSheet.tsx": "file",
+    "VerticalCarousel.tsx": "file",
+    "data": {
+      "articles.tsx": "file",
+      "categories.ts": "file",
+      "users.tsx": "file"
+    },
+    "utils": {
+      "date.ts": "file"
+    }
+  }
+}

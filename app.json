@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Eventos Barranquilla",
+    "slug": "eventos-barranquilla",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.anonymous.eventosbarranquilla"
+    }
+  }
+}
