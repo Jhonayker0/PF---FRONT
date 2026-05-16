@@ -16,13 +16,22 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final List<Event> _events = mockEvents;
+  late TextEditingController _searchController;
+  String _searchQuery = '';
 
   late Map<String, List<Event>> _eventsByCategory;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     _eventsByCategory = _groupEventsByCategory();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Map<String, List<Event>> _groupEventsByCategory() {
@@ -34,6 +43,34 @@ class _HomeScreenState extends State<HomeScreen> {
       grouped[event.category]!.add(event);
     }
     return grouped;
+  }
+
+  List<Event> _filterEvents(List<Event> events) {
+    if (_searchQuery.isEmpty) {
+      return events;
+    }
+    final query = _searchQuery.toLowerCase();
+    return events
+        .where((event) =>
+            event.title.toLowerCase().contains(query) ||
+            event.category.toLowerCase().contains(query) ||
+            event.location.toLowerCase().contains(query) ||
+            event.description.toLowerCase().contains(query))
+        .toList();
+  }
+
+  Map<String, List<Event>> _getFilteredEventsByCategory() {
+    if (_searchQuery.isEmpty) {
+      return _eventsByCategory;
+    }
+    final filtered = <String, List<Event>>{};
+    for (final entry in _eventsByCategory.entries) {
+      final categoryEvents = _filterEvents(entry.value);
+      if (categoryEvents.isNotEmpty) {
+        filtered[entry.key] = categoryEvents;
+      }
+    }
+    return filtered;
   }
 
   @override
@@ -189,10 +226,28 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             )
                           : TextField(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Buscar eventos...',
                                 prefixIcon: const Icon(Icons.search,
                                     color: Color(0xFF8A7F73)),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear,
+                                            color: Color(0xFF8A7F73)),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          setState(() {
+                                            _searchQuery = '';
+                                          });
+                                        },
+                                      )
+                                    : null,
                                 filled: true,
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(
@@ -216,28 +271,99 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                     ),
                     const SizedBox(height: 28),
-                    // Discover carousel
-                    DiscoverEvents(
-                      events:
-                          _events.take(5).toList(), // Primeros 5 eventos
-                      themeData: theme,
-                    ),
-                    const SizedBox(height: 28),
-                    // Scrolling events by category
-                    ..._eventsByCategory.entries.map((entry) {
-                      final category = entry.key;
-                      final categoryEvents = entry.value;
-                      return Column(
+                    // Display search results or all events
+                    if (_searchQuery.isEmpty)
+                      Column(
                         children: [
-                          ScrollingEvents(
-                            title: category,
-                            events: categoryEvents,
+                          // Discover carousel
+                          DiscoverEvents(
+                            events: _events.take(5).toList(),
                             themeData: theme,
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
+                          // Scrolling events by category
+                          ..._eventsByCategory.entries.map((entry) {
+                            final category = entry.key;
+                            final categoryEvents = entry.value;
+                            return Column(
+                              children: [
+                                ScrollingEvents(
+                                  title: category,
+                                  events: categoryEvents,
+                                  themeData: theme,
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          }).toList(),
                         ],
-                      );
-                    }).toList(),
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              'Resultados de búsqueda',
+                              style: theme.textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ..._getFilteredEventsByCategory()
+                              .entries
+                              .map((entry) {
+                            final category = entry.key;
+                            final categoryEvents = entry.value;
+                            return Column(
+                              children: [
+                                ScrollingEvents(
+                                  title: category,
+                                  events: categoryEvents,
+                                  themeData: theme,
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          }).toList(),
+                          if (_getFilteredEventsByCategory().isEmpty)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 40),
+                                    const Icon(
+                                      Icons.search_off,
+                                      size: 56,
+                                      color: Color(0xFFC4B5A0),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No se encontraron eventos',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF8A7F73),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Intenta con otra búsqueda',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFC4B5A0),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 40),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     const SizedBox(height: 20),
                   ],
                 ),

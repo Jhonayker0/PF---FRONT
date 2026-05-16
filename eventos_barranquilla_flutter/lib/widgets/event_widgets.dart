@@ -245,6 +245,20 @@ class _ScrollingEventsState extends State<ScrollingEvents> {
     _controller.addListener(_onScroll);
   }
 
+  @override
+  void didUpdateWidget(covariant ScrollingEvents oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.events != widget.events) {
+      final nextCount = widget.events.length < _pageSize ? widget.events.length : _pageSize;
+      setState(() {
+        _displayCount = nextCount;
+      });
+      if (_controller.hasClients) {
+        _controller.jumpTo(0);
+      }
+    }
+  }
+
   void _onScroll() {
     if (!_controller.hasClients) return;
     final max = _controller.position.maxScrollExtent;
@@ -282,7 +296,7 @@ class _ScrollingEventsState extends State<ScrollingEvents> {
             controller: _controller,
             physics: const BouncingScrollPhysics(),
             scrollDirection: Axis.horizontal,
-            itemCount: _displayCount,
+            itemCount: _displayCount > widget.events.length ? widget.events.length : _displayCount,
             itemBuilder: (context, index) {
               final event = widget.events[index];
               return _ScrollingEventCard(
