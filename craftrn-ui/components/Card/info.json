@@ -1,7 +1,0 @@
-{
-  "name": "Card",
-  "description": "Card component for creating elevated content containers",
-  "externalDependencies": ["react-native-unistyles"],
-  "craftrnUiComponents": [],
-  "tetrislyIcons": []
-}

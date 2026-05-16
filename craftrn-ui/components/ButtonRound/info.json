@@ -1,7 +1,0 @@
-{
-  "name": "ButtonRound",
-  "description": "Round button component with icon, different variants and sizes",
-  "externalDependencies": ["react-native-reanimated", "react-native-unistyles"],
-  "craftrnUiComponents": ["PressableScale"],
-  "tetrislyIcons": []
-}

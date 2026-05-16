@@ -1,125 +1,184 @@
-# Eventos Barranquilla - Frontend
+# Eventos Barranquilla - Flutter
 
-Aplicación móvil desarrollada con **React Native** y **Expo** para la gestión de eventos culturales en Barranquilla.
+Aplicación móvil para descubrir y gestionar eventos culturales en Barranquilla, desarrollada con **Flutter** y **Dart**.
 
 ## Estructura del Proyecto
 
 ```
-PF - FRONT/
-├── App.js                          # Punto de entrada principal
-├── app.json                        # Configuración de Expo
-├── package.json                    # Dependencias del proyecto
-├── src/
-│   ├── context/
-│   │   └── AuthContext.js         # Contexto de autenticación y gestión de roles
-│   ├── screens/
-│   │   ├── SplashScreen.js        # Pantalla de carga inicial
-│   │   ├── LoginScreen.js         # Pantalla de inicio de sesión
-│   │   ├── RegisterScreen.js      # Pantalla de registro con selección de roles
-│   │   ├── HomeScreen.js          # Pantalla principal (diferente según rol)
-│   │   ├── CreateEventScreen.js   # Pantalla para crear eventos (solo admin)
-│   │   └── EventDetailScreen.js   # Pantalla de detalle del evento
-│   ├── navigation/
-│   │   └── RootNavigator.js       # Configuración de navegación
-│   ├── components/                # Componentes reutilizables (próximas fases)
-│   └── utils/                     # Utilidades y funciones auxiliares
+eventos_barranquilla_flutter/
+├── lib/
+│   ├── main.dart              # Punto de entrada
+│   ├── app.dart               # Configuración de la app (tema, rutas)
+│   ├── models/                # Modelos de datos
+│   │   ├── user.dart          # Modelo de usuario
+│   │   └── event.dart         # Modelo de evento
+│   ├── providers/             # Proveedores de estado
+│   │   └── auth_provider.dart # Autenticación y estado global
+│   └── screens/               # Pantallas de la app
+│       ├── splash_screen.dart
+│       ├── login_screen.dart
+│       ├── register_screen.dart
+│       ├── home_screen.dart
+│       ├── event_detail_screen.dart
+│       └── create_event_screen.dart
+├── assets/
+│   ├── CumbeLogo.png          # Logo de la app
+│   └── FondoLogin.png         # Fondo de pantalla de login
+└── pubspec.yaml               # Dependencias y configuración
 ```
-
-## Funcionalidades Implementadas
-
-### ✅ Autenticación
-- **Login**: Inicio de sesión con email y contraseña
-- **Registro**: Registro nuevo de usuarios con selección de rol
-- **Roles**: Cliente y Administrador de eventos
-- **Persistencia**: Almacenamiento de sesión con AsyncStorage
-
-### ✅ Pantalla de Inicio (Home)
-- **Diferenciación de roles**: Interfaz diferente para cliente y administrador
-- **Listado de eventos**: Muestra eventos disponibles con información básica
-- **Búsqueda**: Preparado para búsqueda (pendiente de implementación completa)
-- **Cerrar sesión**: Opción para salir de la aplicación
-
-### ✅ Gestión de Eventos (Admin)
-- **Crear evento**: Formulario completo con campos de título, categoría, fecha, ubicación y descripción
-- **Categorías**: Festival, Música, Arte, Teatro, Gastronomía
-- **Validación**: Validación básica de campos requeridos
-
-### ✅ Detalle del Evento
-- **Información completa**: Muestra todos los detalles del evento
-- **Estadísticas**: Asistentes, calificación, comentarios
-- **Acciones por rol**:
-  - Cliente: Participar en evento
-  - Admin: Editar o eliminar evento
-
-### ✅ Experiencia de Usuario
-- Interfaz limpia y moderna
-- Navegación fluida entre pantallas
-- Indicadores de carga
-- Alertas informativas
-
-## Cuentas Demo
-
-Para probar la aplicación:
-
-**Cliente:**
-- Email: `cliente@example.com`
-- Contraseña: `123456`
-
-**Administrador:**
-- Email: `admin@example.com`
-- Contraseña: `123456`
 
 ## Requisitos
 
-- Node.js (v14 o superior)
-- npm o yarn
-- Expo CLI: `npm install -g expo-cli`
+- **Flutter**: 3.35.3 o superior
+- **Dart**: 3.9.2 o superior
+- **Android SDK** (para dispositivos Android)
 
-## Instalación y Ejecución
+## Dependencias Principales
 
-1. **Instalar dependencias:**
-   ```bash
-   npm install
-   ```
+- `go_router` (14.8.1+) - Navegación declarativa
+- `provider` - Gestión de estado
+- `flutter_test` - Testing
 
-2. **Iniciar la aplicación:**
-   ```bash
-   npm start
-   ```
+## Instalación
 
-3. **Opciones de ejecución:**
-   - Android: Presiona `a`
-   - iOS: Presiona `i`
-   - Web: Presiona `w`
+1. Clona el repositorio o descarga el código:
+```bash
+cd eventos_barranquilla_flutter
+```
 
-## Próximas Fases
+2. Instala las dependencias:
+```bash
+flutter pub get
+```
 
-- [ ] Integración con backend (FastAPI)
-- [ ] Sistema de recomendación híbrida
-- [ ] Búsqueda y filtrado avanzado de eventos
-- [ ] Sistema de comentarios y calificaciones
-- [ ] Notificaciones push
-- [ ] Pasarela de pagos (PSE)
-- [ ] Perfiles de usuario
-- [ ] Chat entre usuarios
-- [ ] Integración con redes sociales
-- [ ] Análisis de datos (CloudWatch)
+3. Ejecuta la app en un emulador o dispositivo:
+```bash
+flutter run
+```
 
-## Notas Importantes
+## Pantallas
 
-- Los datos de eventos actuales son **mockups** (datos de prueba)
-- La autenticación es **simulada** hasta que se implemente el backend
-- Los tokens de sesión se almacenan en **AsyncStorage**
-- La navegación está configurada para cambiar según el estado de autenticación y rol del usuario
+### Splash Screen
+Pantalla de carga inicial con navegación automática después de 2 segundos.
 
-## Estilos y Colores
+### Login Screen
+Autenticación con email y contraseña.
 
-- **Color primario**: #6C63FF (Púrpura)
-- **Fondo**: #F5F5F5 (Gris claro)
-- **Texto principal**: #1A1A1A (Gris oscuro)
-- **Texto secundario**: #666, #999
-- **Borders**: #E0E0E0 (Gris muy claro)
+**Credenciales de demo:**
+- Cliente: `cliente@example.com` / `123456`
+- Admin: `admin@example.com` / `123456`
 
-## Contacto y Contribuciones
+### Register Screen
+Creación de nueva cuenta con rol (Cliente o Administrador).
 
-Este proyecto es parte del desarrollo de una plataforma para la gestión de eventos culturales en Barranquilla.
+### Home Screen
+Feed de eventos con:
+- Saludo personalizado
+- Badge de rol
+- Lista de eventos
+- Sección exclusiva para administradores (crear evento)
+- Botón de logout
+
+### Event Detail Screen
+Detalles completos del evento:
+- Imagen/ícono del evento
+- Categoría, fecha, ubicación
+- Descripción
+- Botones para registrarse o guardar
+
+### Create Event Screen (Admin)
+Formulario para crear nuevos eventos:
+- Nombre, categoría, fecha, ubicación
+- Descripción
+- Validación de campos
+
+## Tema
+
+### Colores
+- **Primario**: `#DB6B2F` (Naranja)
+- **Secundario**: `#181818` (Negro)
+- **Superficie**: `#FFFFFF` (Blanco)
+- **Fondo**: `#F6F1E8` (Crema)
+
+### Tipografía
+- **Encabezados**: 40px - 22px, peso 700-800
+- **Body**: 16px - 14px, peso 400-500
+
+## Arquitectura
+
+### State Management
+Utilizamos **Provider** con `ChangeNotifier` para gestionar el estado global de autenticación.
+
+### Navigation
+**go_router** proporciona navegación declarativa con soporte para:
+- Rutas nombradas
+- Parámetros dinámicos
+- Redirecciones basadas en autenticación
+- Deep linking
+
+### Models
+- `User`: Información del usuario (id, nombre, email, rol)
+- `Event`: Información del evento (id, título, categoría, fecha, ubicación, descripción, imagen)
+
+## Testing
+
+Ejecuta los tests:
+```bash
+flutter test
+```
+
+## Build
+
+### Debug APK
+```bash
+flutter build apk --debug
+```
+
+### Release APK
+```bash
+flutter build apk --release
+```
+
+El APK se genera en: `build/app/outputs/flutter-apk/app-release.apk`
+
+### Instalar en dispositivo
+```bash
+flutter install
+```
+
+## Mock Data
+
+La app incluye datos mockeados para demo:
+
+**Eventos:**
+- Carnaval de Barranquilla
+- Festival de Música
+- Muestra de Arte
+
+## Autenticación
+
+Actualmente utiliza autenticación mock con credenciales hardcodeadas. Para producción:
+1. Reemplazar con API real en `AuthProvider`
+2. Implementar persistencia con `SharedPreferences` o similar
+3. Agregar token management
+
+## Próximos Pasos
+
+- [ ] Integración con API backend
+- [ ] Persistencia de datos con base de datos local
+- [ ] Push notifications
+- [ ] Filtrado avanzado de eventos
+- [ ] Perfil de usuario
+- [ ] Favoritos/Bookmarks
+
+## Licencia
+
+Este proyecto está bajo licencia MIT.
+
+## Autor
+
+Desarrollado como parte del proyecto Eventos Barranquilla.
+
+---
+
+**Última actualización**: Migración completada desde React Native a Flutter (2026)

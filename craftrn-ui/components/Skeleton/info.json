@@ -1,7 +1,0 @@
-{
-  "name": "Skeleton",
-  "description": "Animated skeleton component for loading states",
-  "externalDependencies": ["react-native-reanimated", "react-native-unistyles"],
-  "craftrnUiComponents": [],
-  "tetrislyIcons": []
-}
