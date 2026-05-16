@@ -8,6 +8,7 @@ import 'screens/create_event_screen.dart';
 import 'screens/event_detail_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/splash_screen.dart';
 
@@ -126,6 +127,10 @@ class EventosBarranquillaApp extends StatelessWidget {
         GoRoute(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
         ),
         GoRoute(
           path: '/event-detail',
