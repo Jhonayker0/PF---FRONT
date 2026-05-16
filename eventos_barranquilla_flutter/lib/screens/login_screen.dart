@@ -113,14 +113,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (authProvider.isLoading)
                           const CircularProgressIndicator(
                             valueColor:
-                                AlwaysStoppedAnimation<Color>(Color(0xFF6C63FF)),
+                                AlwaysStoppedAnimation<Color>(Color(0xFFce1126)),
                           )
                         else
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6C63FF),
+                                backgroundColor: const Color(0xFFce1126),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               : () => context.go('/register'),
                           child: const Text(
                             '¿No tienes cuenta? Regístrate',
-                            style: TextStyle(color: Color(0xFF6C63FF)),
+                            style: TextStyle(color: Color(0xFFCE1126)),
                           ),
                         ),
                         const SizedBox(height: 24),
