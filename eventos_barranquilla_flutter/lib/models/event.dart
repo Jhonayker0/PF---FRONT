@@ -7,7 +7,7 @@ class Event {
   final String description;
   final String image;
 
-  Event({
+  const Event({
     required this.id,
     required this.title,
     required this.category,

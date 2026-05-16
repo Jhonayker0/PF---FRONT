@@ -130,8 +130,16 @@ class EventosBarranquillaApp extends StatelessWidget {
         GoRoute(
           path: '/event-detail',
           builder: (context, state) {
-            final event = state.extra as Event;
-            return EventDetailScreen(event: event);
+            final extra = state.extra;
+            Event event;
+            String? heroTag;
+            if (extra is Map) {
+              event = extra['event'] as Event;
+              heroTag = extra['heroTag'] as String?;
+            } else {
+              event = extra as Event;
+            }
+            return EventDetailScreen(event: event, heroTag: heroTag);
           },
         ),
         GoRoute(

@@ -3,9 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../models/event.dart';
 
 class EventDetailScreen extends StatelessWidget {
-  const EventDetailScreen({required this.event, super.key});
+  const EventDetailScreen({required this.event, this.heroTag, super.key});
 
   final Event event;
+  final String? heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -16,24 +17,34 @@ class EventDetailScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+
+            context.go('/home');
+          },
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event image
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF0E6FF),
-              ),
-              child: Center(
-                child: Text(
-                  event.image,
-                  style: const TextStyle(fontSize: 80),
+            // Event image with Hero for smooth transition
+            Hero(
+              tag: heroTag ?? 'event_${event.id}',
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF0E6FF),
+                ),
+                child: Center(
+                  child: Text(
+                    event.image,
+                    style: const TextStyle(fontSize: 80),
+                  ),
                 ),
               ),
             ),
