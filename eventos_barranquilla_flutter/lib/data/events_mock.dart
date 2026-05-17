@@ -10,7 +10,8 @@ const List<Event> mockEvents = [
     location: 'Centro Histórico',
     description:
         'El festival cultural más importante del Caribe colombiano. Con desfiles, música, danza y tradición.',
-    image: '🎭',
+    imageUrl: 'https://picsum.photos/500/300?random=1',
+    price: 0.0,
   ),
   Event(
     id: '2',
@@ -20,7 +21,8 @@ const List<Event> mockEvents = [
     location: 'Parque Bolívar',
     description:
         'Una noche con lo mejor de la música tropical colombiana con artistas nacionales e internacionales.',
-    image: '🎵',
+    imageUrl: 'https://picsum.photos/500/300?random=2',
+    price: 30.0,
   ),
   Event(
     id: '3',
@@ -30,7 +32,8 @@ const List<Event> mockEvents = [
     location: 'Galería del Centro',
     description:
         'Artistas locales muestran sus obras en una experiencia única que celebra el talento barranquillero.',
-    image: '🎨',
+    imageUrl: 'https://picsum.photos/500/300?random=3',
+    price: 0.0,
   ),
 
   // Más eventos por categoría - Música
@@ -41,7 +44,8 @@ const List<Event> mockEvents = [
     date: '5 de Marzo',
     location: 'Estadio Metropolitano',
     description: 'Los mejores artistas de champeta colombiana en un solo escenario.',
-    image: '🎤',
+    imageUrl: 'https://picsum.photos/500/300?random=4',
+    price: 25.0,
   ),
   Event(
     id: '5',
@@ -50,7 +54,8 @@ const List<Event> mockEvents = [
     date: '12 de Marzo',
     location: 'Club Nocturno Centro',
     description: 'Disfruta de la mejor salsa con orquesta en vivo toda la noche.',
-    image: '💃',
+    imageUrl: 'https://picsum.photos/500/300?random=5',
+    price: 20.0,
   ),
   Event(
     id: '6',
@@ -59,7 +64,8 @@ const List<Event> mockEvents = [
     date: '22 de Abril',
     location: 'Teatro Amira de la Rosa',
     description: 'Artistas internacionales traen el mejor jazz a la ciudad.',
-    image: '🎷',
+    imageUrl: 'https://picsum.photos/500/300?random=6',
+    price: 40.0,
   ),
 
   // Eventos por categoría - Arte
@@ -70,7 +76,8 @@ const List<Event> mockEvents = [
     date: '18 de Marzo',
     location: 'Estudio Creativo',
     description: 'Aprende técnicas de pintura acrílica con artistas profesionales.',
-    image: '🖌️',
+    imageUrl: 'https://picsum.photos/500/300?random=7',
+    price: 10.0,
   ),
   Event(
     id: '8',
@@ -79,7 +86,8 @@ const List<Event> mockEvents = [
     date: '25 de Abril',
     location: 'Centro de Convenciones',
     description: 'La más importante muestra de arte contemporáneo del Caribe.',
-    image: '🖼️',
+    imageUrl: 'https://picsum.photos/500/300?random=8',
+    price: 0.0,
   ),
   Event(
     id: '9',
@@ -88,7 +96,8 @@ const List<Event> mockEvents = [
     date: '8 de Marzo',
     location: 'Museo Antropológico',
     description: 'Fotos documentales que muestran la cultura y tradición de la ciudad.',
-    image: '📸',
+    imageUrl: 'https://picsum.photos/500/300?random=9',
+    price: 0.0,
   ),
 
   // Eventos por categoría - Cultura
@@ -100,7 +109,8 @@ const List<Event> mockEvents = [
     location: 'Centro Comercial',
     description:
         'Aprende a cocinar platos tradicionales colombianos con chefs locales reconocidos.',
-    image: '🍳',
+    imageUrl: 'https://picsum.photos/500/300?random=10',
+    price: 50.0,
   ),
   Event(
     id: '11',
@@ -109,7 +119,8 @@ const List<Event> mockEvents = [
     date: '16 de Marzo',
     location: 'Café Casa Mayor',
     description: 'Descubre los sabores únicos del café de diferentes regiones colombianas.',
-    image: '☕',
+    imageUrl: 'https://picsum.photos/500/300?random=11',
+    price: 0.0,
   ),
   Event(
     id: '12',
@@ -118,7 +129,8 @@ const List<Event> mockEvents = [
     date: '20 de Abril',
     location: 'Biblioteca Pública',
     description: 'Poetas locales e internacionales comparten sus obras y emociones.',
-    image: '📖',
+    imageUrl: 'https://picsum.photos/500/300?random=12',
+    price: 0.0,
   ),
 
   // Eventos por categoría - Deporte
@@ -130,7 +142,8 @@ const List<Event> mockEvents = [
     location: 'Malecón del Río Magdalena',
     description:
         'Corre los 10km, 5km o camina en el recorrido más hermoso de la ciudad.',
-    image: '🏃',
+    imageUrl: 'https://picsum.photos/500/300?random=13',
+    price: 15.0,
   ),
   Event(
     id: '14',
@@ -139,7 +152,8 @@ const List<Event> mockEvents = [
     date: '30 de Marzo',
     location: 'Playa El Rodadero',
     description: 'Competencia amistosa de fútbol playa con premios y diversión.',
-    image: '⚽',
+    imageUrl: 'https://picsum.photos/500/300?random=14',
+    price: 0.0,
   ),
   Event(
     id: '15',
@@ -148,7 +162,8 @@ const List<Event> mockEvents = [
     date: '5 de Mayo',
     location: 'Parque Simón Bolívar',
     description: 'Sesión de yoga al aire libre para todos los niveles.',
-    image: '🧘',
+    imageUrl: 'https://picsum.photos/500/300?random=15',
+    price: 0.0,
   ),
 
   // Eventos por categoría - Gastronomía
@@ -160,7 +175,8 @@ const List<Event> mockEvents = [
     location: 'Centro de Ferias y Exposiciones',
     description:
         'Los mejores restaurantes de la ciudad presentan sus creaciones culinarias.',
-    image: '🍽️',
+    imageUrl: 'https://picsum.photos/500/300?random=16',
+    price: 120.0,
   ),
   Event(
     id: '17',
@@ -169,6 +185,7 @@ const List<Event> mockEvents = [
     date: '8 de Mayo',
     location: 'Zona Rosa Comercial',
     description: 'Hamburguesas, pizzas y más en versión premium con chefs reconocidos.',
-    image: '🍔',
+    imageUrl: 'https://picsum.photos/500/300?random=17',
+    price: 18.0,
   ),
 ];

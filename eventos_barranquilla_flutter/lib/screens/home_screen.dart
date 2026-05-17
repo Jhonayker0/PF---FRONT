@@ -19,6 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late TextEditingController _searchController;
   String _searchQuery = '';
 
+  
+
   late Map<String, List<Event>> _eventsByCategory;
 
   @override
@@ -73,6 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return filtered;
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -123,28 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: Color(0xFF181818),
                                   ),
                                 ),
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: [
-                                    _RolePill(
-                                      label: isAdmin
-                                          ? '👨‍💼 Organizador'
-                                          : '👤 Cliente',
-                                      color: isAdmin
-                                          ? const Color(0xFFFFEEE6)
-                                          : const Color(0xFFE8F0FF),
-                                      textColor: const Color(0xFF181818),
-                                    ),
-                                    _RolePill(
-                                      label: '${_events.length} eventos',
-                                      color: Colors.white,
-                                      textColor: const Color(0xFF6C63FF),
-                                      borderColor: const Color(0xFFE7DFD4),
-                                    ),
-                                  ],
-                                ),
                               ],
                             ),
                           ),
@@ -181,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: const Text(
                               'Salir',
                               style: TextStyle(
-                                color: Color(0xFF6C63FF),
+                                color: Color(0xFFCE1126),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -212,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6C63FF),
+                                  backgroundColor: const Color(0xFFCE1126),
                                   foregroundColor: Colors.white,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 14),
@@ -263,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(18),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFF6C63FF),
+                                    color: Color(0xFFCE1126),
                                     width: 1.2,
                                   ),
                                 ),
@@ -374,40 +356,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-}
 
-class _RolePill extends StatelessWidget {
-  const _RolePill({
-    required this.label,
-    required this.color,
-    required this.textColor,
-    this.borderColor,
-  });
 
-  final String label;
-  final Color color;
-  final Color textColor;
-  final Color? borderColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(999),
-        border: borderColor == null
-            ? null
-            : Border.all(color: borderColor!),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-        ),
-      ),
-    );
-  }
 }

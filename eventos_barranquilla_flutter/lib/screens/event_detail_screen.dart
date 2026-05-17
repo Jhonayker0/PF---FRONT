@@ -34,16 +34,15 @@ class EventDetailScreen extends StatelessWidget {
             // Event image with Hero for smooth transition
             Hero(
               tag: heroTag ?? 'event_${event.id}',
-              child: Container(
+              child: SizedBox(
                 width: double.infinity,
                 height: 200,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF0E6FF),
-                ),
-                child: Center(
-                  child: Text(
-                    event.image,
-                    style: const TextStyle(fontSize: 80),
+                child: Image.network(
+                  event.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.broken_image, size: 80),
                   ),
                 ),
               ),
@@ -82,6 +81,28 @@ class EventDetailScreen extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1A1A1A),
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Price
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.monetization_on,
+                        size: 18,
+                        color: Color(0xFF6C63FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        event.price == 0.0
+                            ? 'Gratis'
+                            : '\$${event.price.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   // Date

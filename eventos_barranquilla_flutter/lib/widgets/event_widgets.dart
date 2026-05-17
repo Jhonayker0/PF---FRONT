@@ -93,8 +93,8 @@ class _DiscoverCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF6C63FF).withValues(alpha: 0.8),
-                  Color(0xFFDB6B2F).withValues(alpha: 0.6),
+                  Color(0xFFfcd116).withValues(alpha: 0.8),
+                  Color(0xFFDB6B2F).withValues(alpha: 1),
                 ],
               ),
               boxShadow: [
@@ -107,14 +107,27 @@ class _DiscoverCard extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // Fondo con emoji grande
-                Positioned(
-                  right: -30,
-                  top: -30,
-                  child: Text(
-                    event.image,
-                    style: const TextStyle(fontSize: 160),
-                    overflow: TextOverflow.fade,
+                // Fondo con imagen
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20.0),
+                    child: Image.network(
+                      event.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image),
+                      ),
+                    ),
+                  ),
+                ),
+                // Overlay oscuro
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20.0),
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
                   ),
                 ),
                 // Contenido
@@ -338,31 +351,16 @@ class _ScrollingEventCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Imagen/Emoji container
+                // Imagen container
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF6C63FF).withValues(alpha: 0.6),
-                          Color(0xFFDB6B2F).withValues(alpha: 0.4),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        event.image,
-                        style: const TextStyle(fontSize: 48),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      event.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, size: 32),
                       ),
                     ),
                   ),
@@ -457,27 +455,21 @@ class _CategoryEventCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Emoji container
+              // Imagen container
               Hero(
                 tag: 'event_category_${event.id}',
-                child: Container(
-                  width: 100,
-                  margin: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF6C63FF).withValues(alpha: 0.5),
-                        Color(0xFFDB6B2F).withValues(alpha: 0.3),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      event.image,
-                      style: const TextStyle(fontSize: 56),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 100,
+                    margin: const EdgeInsets.all(12),
+                    child: Image.network(
+                      event.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, size: 40),
+                      ),
                     ),
                   ),
                 ),
