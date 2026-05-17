@@ -5,16 +5,18 @@ class Event {
   final String date;
   final String location;
   final String description;
-  final String image;
+  final String imageUrl;
+  final double price;
 
-  Event({
+  const Event({
     required this.id,
     required this.title,
     required this.category,
     required this.date,
     required this.location,
     required this.description,
-    required this.image,
+    required this.imageUrl,
+    this.price = 0.0,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -25,7 +27,8 @@ class Event {
       date: json['date'] ?? '',
       location: json['location'] ?? '',
       description: json['description'] ?? '',
-      image: json['image'] ?? '🎭',
+      imageUrl: json['imageUrl'] ?? '',
+      price: (json['price'] is num) ? (json['price'] as num).toDouble() : 0.0,
     );
   }
 
@@ -37,7 +40,8 @@ class Event {
       'date': date,
       'location': location,
       'description': description,
-      'image': image,
+      'imageUrl': imageUrl,
+      'price': price,
     };
   }
 }

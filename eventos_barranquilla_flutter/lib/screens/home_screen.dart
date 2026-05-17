@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+
+import '../data/events_mock.dart';
 import '../models/event.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/event_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,319 +15,347 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Event> _events = [
-    Event(
-      id: '1',
-      title: 'Carnaval de Barranquilla 2024',
-      category: 'Festival',
-      date: '20 de Febrero',
-      location: 'Centro Histórico',
-      description: 'El festival cultural más importante del Caribe',
-      image: '🎭',
-    ),
-    Event(
-      id: '2',
-      title: 'Festival de Música Tropical',
-      category: 'Música',
-      date: '15 de Marzo',
-      location: 'Parque Bolívar',
-      description: 'Encuentra lo mejor de la música tropical colombiana',
-      image: '🎵',
-    ),
-    Event(
-      id: '3',
-      title: 'Exposición de Arte Local',
-      category: 'Arte',
-      date: '28 de Febrero',
-      location: 'Galería del Centro',
-      description: 'Artistas locales muestran sus obras',
-      image: '🎨',
-    ),
-  ];
+  final List<Event> _events = mockEvents;
+  late TextEditingController _searchController;
+  String _searchQuery = '';
+
+  
+
+  late Map<String, List<Event>> _eventsByCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _eventsByCategory = _groupEventsByCategory();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Map<String, List<Event>> _groupEventsByCategory() {
+    final Map<String, List<Event>> grouped = {};
+    for (final event in _events) {
+      if (!grouped.containsKey(event.category)) {
+        grouped[event.category] = [];
+      }
+      grouped[event.category]!.add(event);
+    }
+    return grouped;
+  }
+
+  List<Event> _filterEvents(List<Event> events) {
+    if (_searchQuery.isEmpty) {
+      return events;
+    }
+    final query = _searchQuery.toLowerCase();
+    return events
+        .where((event) =>
+            event.title.toLowerCase().contains(query) ||
+            event.category.toLowerCase().contains(query) ||
+            event.location.toLowerCase().contains(query) ||
+            event.description.toLowerCase().contains(query))
+        .toList();
+  }
+
+  Map<String, List<Event>> _getFilteredEventsByCategory() {
+    if (_searchQuery.isEmpty) {
+      return _eventsByCategory;
+    }
+    final filtered = <String, List<Event>>{};
+    for (final entry in _eventsByCategory.entries) {
+      final categoryEvents = _filterEvents(entry.value);
+      if (categoryEvents.isNotEmpty) {
+        filtered[entry.key] = categoryEvents;
+      }
+    }
+    return filtered;
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        final isAdmin = authProvider.user?.role == 'admin';
+        final user = authProvider.user;
+        final isAdmin = user?.role == 'admin';
+        final theme = Theme.of(context);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F5F5),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFFF5F5F5),
-            elevation: 0,
-            automaticallyImplyLeading: false,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Bienvenido,',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF999999),
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-                Text(
-                  authProvider.user?.name ?? 'Usuario',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A),
-                  ),
-                ),
-              ],
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFF9F4EB), Color(0xFFF3EFE8)],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Cerrar sesión'),
-                      content: const Text(
-                        '¿Estás seguro de que deseas cerrar sesión?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            authProvider.signOut();
-                            Navigator.pop(context);
-                            context.go('/splash');
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
+            child: SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Bienvenido,',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF8A7F73),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.name ?? 'Usuario',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF181818),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: const Text('Cerrar sesión'),
-                        ),
-                      ],
+                          TextButton(
+                            onPressed: () {
+                              showDialog<void>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text('Cerrar sesión'),
+                                  content: const Text(
+                                    '¿Estás seguro de que deseas cerrar sesión?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        authProvider.signOut();
+                                        Navigator.pop(dialogContext);
+                                        context.go('/login');
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                      child: const Text('Cerrar sesión'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Salir',
+                              style: TextStyle(
+                                color: Color(0xFFCE1126),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                },
-                child: const Text(
-                  'Salir',
-                  style: TextStyle(color: Color(0xFF6C63FF)),
+                    // Subtitle
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        isAdmin
+                            ? 'Administra y crea experiencias culturales.'
+                            : 'Descubre los próximos eventos culturales de la ciudad.',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: Color(0xFF6B645C),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    // Action button or search
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: isAdmin
+                          ? SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFCE1126),
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                onPressed: () => context.go('/create-event'),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Crear Nuevo Evento'),
+                              ),
+                            )
+                          : TextField(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Buscar eventos...',
+                                prefixIcon: const Icon(Icons.search,
+                                    color: Color(0xFF8A7F73)),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear,
+                                            color: Color(0xFF8A7F73)),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          setState(() {
+                                            _searchQuery = '';
+                                          });
+                                        },
+                                      )
+                                    : null,
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE7DFD4),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFCE1126),
+                                    width: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 28),
+                    // Display search results or all events
+                    if (_searchQuery.isEmpty)
+                      Column(
+                        children: [
+                          // Discover carousel
+                          DiscoverEvents(
+                            events: _events.take(5).toList(),
+                            themeData: theme,
+                          ),
+                          const SizedBox(height: 28),
+                          // Scrolling events by category
+                          ..._eventsByCategory.entries.map((entry) {
+                            final category = entry.key;
+                            final categoryEvents = entry.value;
+                            return Column(
+                              children: [
+                                ScrollingEvents(
+                                  title: category,
+                                  events: categoryEvents,
+                                  themeData: theme,
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          }).toList(),
+                        ],
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              'Resultados de búsqueda',
+                              style: theme.textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ..._getFilteredEventsByCategory()
+                              .entries
+                              .map((entry) {
+                            final category = entry.key;
+                            final categoryEvents = entry.value;
+                            return Column(
+                              children: [
+                                ScrollingEvents(
+                                  title: category,
+                                  events: categoryEvents,
+                                  themeData: theme,
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          }).toList(),
+                          if (_getFilteredEventsByCategory().isEmpty)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 40),
+                                    const Icon(
+                                      Icons.search_off,
+                                      size: 56,
+                                      color: Color(0xFFC4B5A0),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No se encontraron eventos',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF8A7F73),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Intenta con otra búsqueda',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFC4B5A0),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 40),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-            ],
-          ),
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Role badge
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isAdmin
-                          ? const Color(0xFFFFEEE6)
-                          : const Color(0xFFE6F0FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      isAdmin ? '👨‍💼 Organizador' : '👤 Cliente',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF333333),
-                      ),
-                    ),
-                  ),
-                ),
-                // Create event button for admin or search for client
-                if (isAdmin)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C63FF),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () => context.go('/create-event'),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Crear Nuevo Evento'),
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: '🔍 Buscar eventos...',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                // Events section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Eventos Disponibles',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      GestureDetector(
-                        child: const Text(
-                          'Ver todo →',
-                          style: TextStyle(
-                            color: Color(0xFF6C63FF),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Events list
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < _events.length; i++)
-                        Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i < _events.length - 1 ? 12 : 0,
-                          ),
-                          child: _EventCard(
-                            event: _events[i],
-                            onTap: () {
-                              context.go('/event-detail/${_events[i].id}',
-                                  extra: _events[i]);
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
             ),
           ),
         );
       },
     );
   }
-}
 
-class _EventCard extends StatelessWidget {
-  const _EventCard({required this.event, required this.onTap});
 
-  final Event event;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Row(
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F5),
-              ),
-              child: Center(
-                child: Text(
-                  event.image,
-                  style: const TextStyle(fontSize: 40),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0E6FF),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        event.category,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF6C63FF),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      event.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A1A),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      event.date,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF999999),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '📍 ${event.location}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF999999),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
