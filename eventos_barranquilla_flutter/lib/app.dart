@@ -6,8 +6,10 @@ import 'models/event.dart';
 import 'providers/auth_provider.dart';
 import 'screens/create_event_screen.dart';
 import 'screens/event_detail_screen.dart';
+import 'screens/favorites_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/splash_screen.dart';
 
@@ -123,9 +125,24 @@ class EventosBarranquillaApp extends StatelessWidget {
           path: '/register',
           builder: (context, state) => const RegisterScreen(),
         ),
-        GoRoute(
-          path: '/home',
-          builder: (context, state) => const HomeScreen(),
+        ShellRoute(
+          builder: (context, state, child) {
+            return _ScaffoldWithBottomNav(child: child);
+          },
+          routes: [
+            GoRoute(
+              path: '/home',
+              builder: (context, state) => const HomeScreen(),
+            ),
+            GoRoute(
+              path: '/favorites',
+              builder: (context, state) => const FavoritesScreen(),
+            ),
+            GoRoute(
+              path: '/profile',
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/event-detail',
@@ -147,6 +164,61 @@ class EventosBarranquillaApp extends StatelessWidget {
           builder: (context, state) => const CreateEventScreen(),
         ),
       ],
+    );
+  }
+}
+
+class _ScaffoldWithBottomNav extends StatelessWidget {
+  const _ScaffoldWithBottomNav({required this.child});
+
+  final Widget child;
+
+  int _locationToIndex(String location) {
+    if (location.startsWith('/favorites')) {
+      return 1;
+    }
+    if (location.startsWith('/profile')) {
+      return 2;
+    }
+    return 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    final currentIndex = _locationToIndex(location);
+
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          switch (index) {
+            case 1:
+              context.go('/favorites');
+              break;
+            case 2:
+              context.go('/profile');
+              break;
+            default:
+              context.go('/home');
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            label: 'Favoritos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Perfil',
+          ),
+        ],
+      ),
     );
   }
 }
