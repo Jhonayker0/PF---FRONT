@@ -130,44 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              showDialog<void>(
-                                context: context,
-                                builder: (dialogContext) => AlertDialog(
-                                  title: const Text('Cerrar sesión'),
-                                  content: const Text(
-                                    '¿Estás seguro de que deseas cerrar sesión?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(dialogContext),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        authProvider.signOut();
-                                        Navigator.pop(dialogContext);
-                                        context.go('/login');
-                                      },
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      child: const Text('Cerrar sesión'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'Salir',
-                              style: TextStyle(
-                                color: Color(0xFFCE1126),
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),

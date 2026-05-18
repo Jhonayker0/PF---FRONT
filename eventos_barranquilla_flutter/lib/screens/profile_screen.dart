@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../data/user_mock.dart';
+import '../providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -77,7 +80,42 @@ class ProfileScreen extends StatelessWidget {
               text: 'Legal',
               icon: Icons.menu_book_outlined,
             ),
-            const _ProfileListItem(text: 'Cerrar sesion', icon: Icons.logout),
+            _ProfileListItem(
+              text: 'Cerrar sesion',
+              icon: Icons.logout,
+              onTap: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Cerrar sesión'),
+                    content: const Text(
+                      '¿Estás seguro de que deseas cerrar sesión?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Cancelar'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          await context.read<AuthProvider>().signOut();
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                          if (context.mounted) {
+                            context.go('/login');
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Cerrar sesión'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -180,12 +218,6 @@ class _ProfileHeaderCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 _ProfileStat(value: '${stats.reviews}', label: 'Resenas'),
                 const SizedBox(height: 10),
-                const Divider(height: 1, color: ProfileScreen._border),
-                const SizedBox(height: 10),
-                _ProfileStat(
-                  value: '${stats.monthsOnCumbe}',
-                  label: 'Mes en Cumbe',
-                ),
               ],
             ),
           ),
