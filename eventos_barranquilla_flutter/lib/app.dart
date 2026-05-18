@@ -105,11 +105,6 @@ class EventosBarranquillaApp extends StatelessWidget {
           return '/home';
         }
 
-        // If user is not logged in and trying to access protected pages, redirect to login
-        if (!isLoggedIn && state.matchedLocation != '/' && state.matchedLocation != '/login' && state.matchedLocation != '/register') {
-          return '/login';
-        }
-
         return null;
       },
       routes: [

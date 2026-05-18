@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/events_mock.dart';
+import '../data/user_mock.dart';
 import '../models/event.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/event_widgets.dart';
@@ -18,16 +19,25 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Event> _events = mockEvents;
   late TextEditingController _searchController;
   String _searchQuery = '';
-
-  
-
   late Map<String, List<Event>> _eventsByCategory;
+  bool _loginPromptShown = false;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _eventsByCategory = _groupEventsByCategory();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      final authProvider = context.read<AuthProvider>();
+      if (!authProvider.isAuthenticated && !_loginPromptShown) {
+        _loginPromptShown = true;
+        _showLoginPrompt();
+      }
+    });
   }
 
   @override
@@ -75,13 +85,171 @@ class _HomeScreenState extends State<HomeScreen> {
     return filtered;
   }
 
+  Future<void> _showLoginPrompt() async {
+    if (!mounted) {
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.48,
+          minChildSize: 0.35,
+          maxChildSize: 0.78,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 30,
+                      offset: Offset(0, -8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF1F1A17), Color(0xFF3A2F28)],
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Align(
+                                alignment: Alignment.center,
+                                child: Container(
+                                  width: 42,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              Container(
+                                height: 56,
+                                width: 56,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.16),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.account_circle_outlined,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Inicia sesión para una experiencia completa',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.15,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Sin sesión puedes explorar, pero al entrar podrás ver tu perfil, favoritos y contenido personalizado.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _PromptFeatureRow(
+                                icon: Icons.verified_user_outlined,
+                                title: 'Perfil y estadísticas',
+                                subtitle: 'Verás tu información y progreso dentro de la app.',
+                              ),
+                              const SizedBox(height: 14),
+                              _PromptFeatureRow(
+                                icon: Icons.favorite_border,
+                                title: 'Favoritos y guardados',
+                                subtitle: 'Accede a tus eventos preferidos desde cualquier pantalla.',
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    backgroundColor: const Color(0xFFCE1126),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(sheetContext);
+                                    context.go('/login');
+                                  },
+                                  child: const Text('Ir al login'),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(sheetContext),
+                                  child: const Text('Ahora no'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
 
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        final user = authProvider.user;
+        final isLoggedIn = authProvider.isAuthenticated;
+        final user = isLoggedIn ? mockUser : null;
         final isAdmin = user?.role == 'admin';
         final theme = Theme.of(context);
 
@@ -110,9 +278,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Bienvenido,',
-                                  style: TextStyle(
+                                Text(
+                                  isLoggedIn ? 'Bienvenido,' : 'Explora eventos',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF8A7F73),
                                     fontWeight: FontWeight.w500,
@@ -120,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  user?.name ?? 'Usuario',
+                                  isLoggedIn ? user!.name : 'Agenda cultural de Barranquilla',
                                   style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
@@ -137,7 +305,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
-                        isAdmin
+                        !isLoggedIn
+                            ? 'Revisa eventos, descubre categorías y entra al login cuando quieras guardar tu experiencia.'
+                            : isAdmin
                             ? 'Administra y crea experiencias culturales.'
                             : 'Descubre los próximos eventos culturales de la ciudad.',
                         style: const TextStyle(
@@ -320,4 +490,59 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
+}
+
+class _PromptFeatureRow extends StatelessWidget {
+  const _PromptFeatureRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5EFE7),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: const Color(0xFFCE1126)),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF181818),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: Color(0xFF6B645C),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }

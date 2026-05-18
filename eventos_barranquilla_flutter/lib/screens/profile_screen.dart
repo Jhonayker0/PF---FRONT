@@ -16,109 +16,151 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = mockUser;
-    final stats = mockProfileStats;
-    final roleLabel = user.role == 'admin' ? 'Organizador' : 'Invitado';
-    final trimmedName = user.name.trim();
-    final avatarLetter = trimmedName.isNotEmpty
-        ? trimmedName.substring(0, 1).toUpperCase()
-        : 'U';
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final isLoggedIn = authProvider.isAuthenticated;
+        final user = isLoggedIn ? mockUser : null;
+        final stats = isLoggedIn ? mockProfileStats : null;
+        final roleLabel = user?.role == 'admin' ? 'Organizador' : 'Invitado';
+        final trimmedName = user?.name.trim() ?? '';
+        final avatarLetter = trimmedName.isNotEmpty
+            ? trimmedName.substring(0, 1).toUpperCase()
+            : 'U';
 
-    return Scaffold(
-      backgroundColor: _background,
-      appBar: AppBar(
-        backgroundColor: _background,
-        foregroundColor: _textPrimary,
-        elevation: 0,
-        title: const Text('Perfil'),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
+        return Scaffold(
+          backgroundColor: _background,
+          appBar: AppBar(
+            backgroundColor: _background,
+            foregroundColor: _textPrimary,
+            elevation: 0,
+            title: const Text('Perfil'),
+            actions: [
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.notifications_none),
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-        child: Column(
-          children: [
-            _ProfileHeaderCard(
-              name: user.name,
-              roleLabel: roleLabel,
-              avatarLetter: avatarLetter,
-              stats: stats,
-            ),
-            const SizedBox(height: 20),
-            const _ProfileQuickActions(),
-            const SizedBox(height: 16),
-            const _ProfilePromoCard(),
-            const SizedBox(height: 18),
-            const _ProfileListItem(
-              text: 'Configuracion de cuenta',
-              icon: Icons.settings_outlined,
-            ),
-            const _ProfileListItem(text: 'Ayuda', icon: Icons.help_outline),
-            const _ProfileListItem(
-              text: 'Ver perfil',
-              icon: Icons.person_outline,
-            ),
-            const _ProfileListItem(
-              text: 'Privacidad',
-              icon: Icons.privacy_tip_outlined,
-            ),
-            const SizedBox(height: 10),
-            const _ProfileListItem(
-              text: 'Referir organizador',
-              icon: Icons.group_outlined,
-            ),
-            const _ProfileListItem(
-              text: 'Encuentra coanfitrion',
-              icon: Icons.groups_2_outlined,
-            ),
-            const _ProfileListItem(
-              text: 'Legal',
-              icon: Icons.menu_book_outlined,
-            ),
-            _ProfileListItem(
-              text: 'Cerrar sesion',
-              icon: Icons.logout,
-              onTap: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('Cerrar sesión'),
-                    content: const Text(
-                      '¿Estás seguro de que deseas cerrar sesión?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        child: const Text('Cancelar'),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          await context.read<AuthProvider>().signOut();
-                          if (dialogContext.mounted) {
-                            Navigator.pop(dialogContext);
-                          }
-                          if (context.mounted) {
-                            context.go('/login');
-                          }
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                        ),
-                        child: const Text('Cerrar sesión'),
-                      ),
-                    ],
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            child: Column(
+              children: [
+                if (isLoggedIn) ...[
+                  _ProfileHeaderCard(
+                    name: user!.name,
+                    roleLabel: roleLabel,
+                    avatarLetter: avatarLetter,
+                    stats: stats!,
                   ),
-                );
-              },
+                  const SizedBox(height: 20),
+                  const _ProfileQuickActions(),
+                  const SizedBox(height: 16),
+                  const _ProfilePromoCard(),
+                  const SizedBox(height: 18),
+                ] else ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: _surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'No has iniciado sesión',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: _textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Inicia sesión para ver tu perfil, tus estadísticas y tus opciones personalizadas.',
+                          style: TextStyle(color: _textMuted, height: 1.4),
+                        ),
+                        const SizedBox(height: 14),
+                        FilledButton(
+                          onPressed: () => context.go('/login'),
+                          child: const Text('Ir al login'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                const _ProfileListItem(
+                  text: 'Configuracion de cuenta',
+                  icon: Icons.settings_outlined,
+                ),
+                const _ProfileListItem(text: 'Ayuda', icon: Icons.help_outline),
+                const _ProfileListItem(
+                  text: 'Ver perfil',
+                  icon: Icons.person_outline,
+                ),
+                const _ProfileListItem(
+                  text: 'Privacidad',
+                  icon: Icons.privacy_tip_outlined,
+                ),
+                const SizedBox(height: 10),
+                const _ProfileListItem(
+                  text: 'Referir organizador',
+                  icon: Icons.group_outlined,
+                ),
+                const _ProfileListItem(
+                  text: 'Encuentra coanfitrion',
+                  icon: Icons.groups_2_outlined,
+                ),
+                const _ProfileListItem(
+                  text: 'Legal',
+                  icon: Icons.menu_book_outlined,
+                ),
+                if (isLoggedIn)
+                  _ProfileListItem(
+                    text: 'Cerrar sesion',
+                    icon: Icons.logout,
+                    onTap: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Cerrar sesión'),
+                          content: const Text(
+                            '¿Estás seguro de que deseas cerrar sesión?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Cancelar'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                await context.read<AuthProvider>().signOut();
+                                if (dialogContext.mounted) {
+                                  Navigator.pop(dialogContext);
+                                }
+                                if (context.mounted) {
+                                  context.go('/');
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Cerrar sesión'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
