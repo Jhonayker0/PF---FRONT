@@ -13,10 +13,16 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  ApiClient(this.baseUrl, {http.Client? client}) : _client = client ?? http.Client();
+  ApiClient(String baseUrl, {http.Client? client})
+      : baseUrl = _normalizeBaseUrl(baseUrl),
+        _client = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _client;
+
+  static String _normalizeBaseUrl(String value) {
+    return value.replaceFirst(RegExp(r'/+$'), '');
+  }
 
   Future<dynamic> getJson(String path, {Map<String, String>? headers}) {
     return _sendJson('GET', path, headers: headers);

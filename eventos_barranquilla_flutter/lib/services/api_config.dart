@@ -1,12 +1,10 @@
-import 'package:flutter/foundation.dart';
-
 class ApiConfig {
   static String get userBaseUrl {
     const value = String.fromEnvironment('USER_API_BASE_URL');
     if (value.isNotEmpty) {
       return value;
     }
-    return kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
+    return 'https://back-cumbe-users.achesito.xyz';
   }
 
   static String get eventBaseUrl {
@@ -14,6 +12,6 @@ class ApiConfig {
     if (value.isNotEmpty) {
       return value;
     }
-    return kIsWeb ? 'http://localhost:4003' : 'http://10.0.2.2:4003';
+    return 'https://back-cumbe-events.achesito.xyz';
   }
 }
