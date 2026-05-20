@@ -20,14 +20,21 @@ class Event {
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
+    final categories = json['categories'];
+    final category = json['category'] ??
+        (categories is List && categories.isNotEmpty ? categories.first : '');
+    final picture = json['picture'];
+    final imageUrl = json['imageUrl'] ??
+        (picture is List && picture.isNotEmpty ? picture.first : (picture ?? ''));
+
     return Event(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      category: json['category'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
+      title: json['title'] ?? json['name'] ?? '',
+      category: category ?? '',
       date: json['date'] ?? '',
       location: json['location'] ?? '',
       description: json['description'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
+      imageUrl: imageUrl ?? '',
       price: (json['price'] is num) ? (json['price'] as num).toDouble() : 0.0,
     );
   }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/user_mock.dart';
+import '../models/profile_stats.dart';
+import '../providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -13,13 +16,61 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = mockUser;
-    final stats = mockProfileStats;
-    final roleLabel = user.role == 'admin' ? 'Organizador' : 'Invitado';
-    final trimmedName = user.name.trim();
+    final authProvider = context.watch<AuthProvider>();
+    final user = authProvider.user;
+    final roleLabel = user?.role == 'admin' ? 'Organizador' : 'Invitado';
+    final trimmedName = user?.name.trim() ?? '';
     final avatarLetter = trimmedName.isNotEmpty
         ? trimmedName.substring(0, 1).toUpperCase()
         : 'U';
+    final stats = ProfileStats(
+      events: user?.attendedEvents.length ?? 0,
+      reviews: 0,
+      monthsOnCumbe: 0,
+    );
+
+    if (authProvider.isLoading) {
+      return const Scaffold(
+        backgroundColor: _background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: _background,
+        appBar: AppBar(
+          backgroundColor: _background,
+          foregroundColor: _textPrimary,
+          elevation: 0,
+          title: const Text('Perfil'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Inicia sesion para ver tu perfil.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _textMuted),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => context.go('/login'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Ir a login'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: _background,

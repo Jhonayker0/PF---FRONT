@@ -1,21 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
+import '../services/user_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _token;
+  final UserService _userService = UserService();
 
   User? get user => _user;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
-
-  // Demo credentials
-  static const _demoCreds = {
-    'cliente@example.com': {'password': '123456', 'name': 'Cliente Demo', 'role': 'client'},
-    'admin@example.com': {'password': '123456', 'name': 'Admin Demo', 'role': 'admin'},
-  };
+  String? get token => _token;
 
   Future<bool> signIn(String email, String password) async {
     _isLoading = true;
@@ -23,29 +21,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 800)); // Simulate API call
-
-      if (!_demoCreds.containsKey(email)) {
-        _errorMessage = 'Correo no encontrado';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      final creds = _demoCreds[email]!;
-      if (creds['password'] != password) {
-        _errorMessage = 'Contraseña incorrecta';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      _user = User(
-        id: email.hashCode.toString(),
-        name: creds['name'] as String,
-        email: email,
-        role: creds['role'] as String,
-      );
+      final token = await _userService.login(email: email, password: password);
+      final userId = await _userService.verifyToken(token);
+      final fetchedUser = await _userService.fetchUser(userId);
+      _token = token;
+      _user = fetchedUser;
 
       _isLoading = false;
       notifyListeners();
@@ -64,13 +44,22 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 800)); // Simulate API call
-
-      _user = User(
-        id: email.hashCode.toString(),
+      final token = await _userService.signup(
         name: name,
         email: email,
-        role: role,
+        password: password,
+      );
+      final userId = await _userService.verifyToken(token);
+      final fetchedUser = await _userService.fetchUser(userId);
+      _token = token;
+      _user = User(
+        id: fetchedUser.id,
+        name: fetchedUser.name,
+        email: fetchedUser.email,
+        role: role.isNotEmpty ? role : fetchedUser.role,
+        profilePicture: fetchedUser.profilePicture,
+        favorites: fetchedUser.favorites,
+        attendedEvents: fetchedUser.attendedEvents,
       );
 
       _isLoading = false;
@@ -87,6 +76,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     _user = null;
     _errorMessage = null;
+    _token = null;
     notifyListeners();
   }
 }

@@ -3,20 +3,36 @@ class User {
   final String name;
   final String email;
   final String role; // 'client' or 'admin'
+  final String? profilePicture;
+  final List<String> favorites;
+  final List<String> attendedEvents;
 
   User({
     required this.id,
     required this.name,
     required this.email,
-    required this.role,
-  });
+    this.role = 'client',
+    this.profilePicture,
+    List<String>? favorites,
+    List<String>? attendedEvents,
+  })  : favorites = favorites ?? [],
+        attendedEvents = attendedEvents ?? [];
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final favorites = json['favorites'];
+    final attended = json['attended_events'] ?? json['attendedEvents'];
     return User(
-      id: json['id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       role: json['role'] ?? 'client',
+      profilePicture: json['profile_picture'] ?? json['profilePicture'],
+      favorites: favorites is List
+          ? favorites.map((item) => item.toString()).toList()
+          : [],
+      attendedEvents: attended is List
+          ? attended.map((item) => item.toString()).toList()
+          : [],
     );
   }
 
@@ -26,6 +42,9 @@ class User {
       'name': name,
       'email': email,
       'role': role,
+      'profile_picture': profilePicture,
+      'favorites': favorites,
+      'attended_events': attendedEvents,
     };
   }
 }

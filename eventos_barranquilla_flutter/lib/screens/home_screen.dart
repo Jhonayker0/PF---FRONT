@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/events_mock.dart';
 import '../models/event.dart';
 import '../providers/auth_provider.dart';
+import '../services/event_service.dart';
 import '../widgets/event_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,19 +15,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Event> _events = mockEvents;
+  final EventService _eventService = EventService();
+  static const List<String> _defaultCategories = [
+    'Festival',
+    'Música',
+    'Arte',
+    'Cultura',
+    'Deporte',
+    'Gastronomía',
+  ];
+
+  List<Event> _featuredEvents = [];
+  Map<String, List<Event>> _eventsByCategory = {};
+  bool _isLoading = true;
+  String? _errorMessage;
   late TextEditingController _searchController;
   String _searchQuery = '';
-
-  
-
-  late Map<String, List<Event>> _eventsByCategory;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    _eventsByCategory = _groupEventsByCategory();
+    _loadEvents();
   }
 
   @override
@@ -36,9 +45,59 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Map<String, List<Event>> _groupEventsByCategory() {
+  Future<void> _loadEvents() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final popularEvents = await _eventService.fetchPopularEvents();
+      final categories = await Future.wait(
+        _defaultCategories.map((category) async {
+          final events = await _eventService.fetchEventsByCategory(category);
+          return MapEntry(category, events);
+        }),
+      );
+
+      final Map<String, List<Event>> groupedByCategory = {};
+      final Map<String, Event> deduplicatedEvents = {};
+
+      for (final event in popularEvents) {
+        deduplicatedEvents[event.id] = event;
+      }
+
+      for (final entry in categories) {
+        final categoryEvents = entry.value;
+        if (categoryEvents.isNotEmpty) {
+          groupedByCategory[entry.key] = categoryEvents;
+        }
+        for (final event in categoryEvents) {
+          deduplicatedEvents[event.id] = event;
+        }
+      }
+
+      setState(() {
+        _featuredEvents = popularEvents.isNotEmpty
+            ? popularEvents.take(5).toList()
+            : deduplicatedEvents.values.take(5).toList();
+        final allEvents = deduplicatedEvents.values.toList();
+        _eventsByCategory = groupedByCategory.isNotEmpty
+            ? groupedByCategory
+          : _groupEventsByCategory(allEvents);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'No pudimos cargar los eventos. Intenta de nuevo.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Map<String, List<Event>> _groupEventsByCategory(List<Event> events) {
     final Map<String, List<Event>> grouped = {};
-    for (final event in _events) {
+    for (final event in events) {
       if (!grouped.containsKey(event.category)) {
         grouped[event.category] = [];
       }
@@ -82,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         final user = authProvider.user;
+        final isLoggedIn = user != null;
         final isAdmin = user?.role == 'admin';
         final theme = Theme.of(context);
 
@@ -110,9 +170,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Bienvenido,',
-                                  style: TextStyle(
+                                Text(
+                                  isLoggedIn ? 'Bienvenido,' : 'Explora eventos',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF8A7F73),
                                     fontWeight: FontWeight.w500,
@@ -120,7 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  user?.name ?? 'Usuario',
+                                  isLoggedIn
+                                      ? user!.name
+                                      : 'Agenda cultural de Barranquilla',
                                   style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
@@ -130,44 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              showDialog<void>(
-                                context: context,
-                                builder: (dialogContext) => AlertDialog(
-                                  title: const Text('Cerrar sesión'),
-                                  content: const Text(
-                                    '¿Estás seguro de que deseas cerrar sesión?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(dialogContext),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        authProvider.signOut();
-                                        Navigator.pop(dialogContext);
-                                        context.go('/login');
-                                      },
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      child: const Text('Cerrar sesión'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'Salir',
-                              style: TextStyle(
-                                color: Color(0xFFCE1126),
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -175,7 +199,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
-                        isAdmin
+                        !isLoggedIn
+                            ? 'Revisa eventos, descubre categorías y entra al login cuando quieras guardar tu experiencia.'
+                            : isAdmin
                             ? 'Administra y crea experiencias culturales.'
                             : 'Descubre los próximos eventos culturales de la ciudad.',
                         style: const TextStyle(
@@ -253,13 +279,41 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                     ),
                     const SizedBox(height: 28),
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: Color(0xFF6B645C),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _loadEvents,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFCE1126),
+                              ),
+                              child: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      )
                     // Display search results or all events
-                    if (_searchQuery.isEmpty)
+                    else if (_searchQuery.isEmpty)
                       Column(
                         children: [
                           // Discover carousel
                           DiscoverEvents(
-                            events: _events.take(5).toList(),
+                            events: _featuredEvents,
                             themeData: theme,
                           ),
                           const SizedBox(height: 28),

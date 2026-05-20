@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
 import '../models/event.dart';
+import '../providers/auth_provider.dart';
+import '../services/event_service.dart';
 
 class EventDetailScreen extends StatelessWidget {
   const EventDetailScreen({required this.event, this.heroTag, super.key});
@@ -10,6 +14,7 @@ class EventDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final eventService = EventService();
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -174,12 +179,40 @@ class EventDetailScreen extends StatelessWidget {
                         backgroundColor: const Color(0xFF6C63FF),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('¡Te has registrado en el evento!'),
-                          ),
-                        );
+                      onPressed: () async {
+                        final user = context.read<AuthProvider>().user;
+                        if (user == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Inicia sesion para registrarte'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        try {
+                          await eventService.attendEvent(
+                            eventId: event.id,
+                            userId: user.id,
+                          );
+                          if (!context.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('¡Te has registrado en el evento!'),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('No se pudo registrar: $e'),
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.check),
                       label: const Text('Registrarse al Evento'),

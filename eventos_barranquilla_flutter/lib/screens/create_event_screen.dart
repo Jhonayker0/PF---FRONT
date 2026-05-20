@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import '../services/event_service.dart';
 
 class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
@@ -14,6 +18,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   late TextEditingController _locationController;
   late TextEditingController _dateController;
   String _category = 'Festival';
+  final EventService _eventService = EventService();
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -200,7 +206,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     backgroundColor: const Color(0xFF6C63FF),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onPressed: () {
+                  onPressed: _isSubmitting
+                      ? null
+                      : () async {
                     if (_titleController.text.isEmpty ||
                         _descriptionController.text.isEmpty ||
                         _locationController.text.isEmpty ||
@@ -212,17 +220,55 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       );
                       return;
                     }
+                    final user = context.read<AuthProvider>().user;
+                    if (user == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Debes iniciar sesion para crear eventos'),
+                        ),
+                      );
+                      return;
+                    }
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('¡Evento creado exitosamente!'),
-                      ),
-                    );
-
-                    context.go('/home');
+                    setState(() => _isSubmitting = true);
+                    try {
+                      await _eventService.createEvent(
+                        userId: user.id,
+                        name: _titleController.text.trim(),
+                        description: _descriptionController.text.trim(),
+                        date: _dateController.text.trim(),
+                        location: _locationController.text.trim(),
+                        category: _category,
+                        organizer: user,
+                      );
+                      if (!mounted) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('¡Evento creado exitosamente!'),
+                        ),
+                      );
+                      context.go('/home');
+                    } catch (e) {
+                      if (!mounted) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('No se pudo crear el evento: $e'),
+                        ),
+                      );
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isSubmitting = false);
+                      }
+                    }
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Crear Evento'),
+                  label: Text(
+                    _isSubmitting ? 'Creando...' : 'Crear Evento',
+                  ),
                 ),
               ),
             ],
