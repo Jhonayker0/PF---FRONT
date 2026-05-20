@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../data/events_mock.dart';
 import '../models/event.dart';
 import '../providers/auth_provider.dart';
+import '../services/event_service.dart';
 import '../widgets/event_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,7 +16,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Event> _events = mockEvents;
+  final EventService _eventService = EventService();
+  List<Event> _events = [];
+  bool _isLoading = true;
+  String? _errorMessage;
   late TextEditingController _searchController;
   String _searchQuery = '';
 
@@ -27,13 +31,35 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    _eventsByCategory = _groupEventsByCategory();
+    _eventsByCategory = {};
+    _loadEvents();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final events = await _eventService.fetchPopularEvents();
+      setState(() {
+        _events = events;
+        _eventsByCategory = _groupEventsByCategory();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'No pudimos cargar los eventos. Intenta de nuevo.';
+        _isLoading = false;
+      });
+    }
   }
 
   Map<String, List<Event>> _groupEventsByCategory() {
@@ -253,8 +279,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                     ),
                     const SizedBox(height: 28),
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: Color(0xFF6B645C),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _loadEvents,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFCE1126),
+                              ),
+                              child: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      )
                     // Display search results or all events
-                    if (_searchQuery.isEmpty)
+                    else if (_searchQuery.isEmpty)
                       Column(
                         children: [
                           // Discover carousel
