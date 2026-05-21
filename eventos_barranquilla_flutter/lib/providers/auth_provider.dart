@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
+import '../models/profile_stats.dart';
 import '../services/user_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -14,6 +15,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
   String? get token => _token;
+
+  ProfileStats get profileStats {
+    final eventsCount = _user?.attendedEvents.length ?? 0;
+    return ProfileStats(events: eventsCount, reviews: 0, monthsOnCumbe: 0);
+  }
 
   Future<bool> signIn(String email, String password) async {
     _isLoading = true;
@@ -74,6 +80,15 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    final token = _token;
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _userService.logout(token: token);
+      } catch (_) {
+        // Clear local auth state even if the backend logout request fails.
+      }
+    }
+
     _user = null;
     _errorMessage = null;
     _token = null;

@@ -135,13 +135,13 @@ class _DiscoverCard extends StatelessWidget {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       // Categoría badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 6,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.25),
@@ -159,6 +159,7 @@ class _DiscoverCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 100),
                       // Título
                       Text(
                         event.title,
@@ -171,6 +172,7 @@ class _DiscoverCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 12),
                       // Fecha y ubicación
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

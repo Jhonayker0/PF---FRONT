@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../models/profile_stats.dart';
 import '../providers/auth_provider.dart';
-import '../providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -20,8 +19,8 @@ class ProfileScreen extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         final isLoggedIn = authProvider.isAuthenticated;
-        final user = isLoggedIn ? mockUser : null;
-        final stats = isLoggedIn ? mockProfileStats : null;
+        final user = isLoggedIn ? authProvider.user : null;
+        final stats = isLoggedIn ? authProvider.profileStats : null;
         final roleLabel = user?.role == 'admin' ? 'Organizador' : 'Invitado';
         final trimmedName = user?.name.trim() ?? '';
         final avatarLetter = trimmedName.isNotEmpty
@@ -35,13 +34,6 @@ class ProfileScreen extends StatelessWidget {
             foregroundColor: _textPrimary,
             elevation: 0,
             title: const Text('Perfil'),
-            actions: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_none),
-              ),
-              const SizedBox(width: 4),
-            ],
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
@@ -52,6 +44,7 @@ class ProfileScreen extends StatelessWidget {
                     name: user!.name,
                     roleLabel: roleLabel,
                     avatarLetter: avatarLetter,
+                    profilePictureUrl: user.profilePicture,
                     stats: stats!,
                   ),
                   const SizedBox(height: 20),
@@ -171,12 +164,14 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.name,
     required this.roleLabel,
     required this.avatarLetter,
+    required this.profilePictureUrl,
     required this.stats,
   });
 
   final String name;
   final String roleLabel;
   final String avatarLetter;
+  final String? profilePictureUrl;
   final ProfileStats stats;
 
   @override
@@ -205,15 +200,22 @@ class _ProfileHeaderCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 38,
-                    backgroundColor: Color(0xFFF3E6D8),
-                    child: Text(
-                      avatarLetter,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF8E4A1F),
-                      ),
-                    ),
+                    backgroundColor: const Color(0xFFF3E6D8),
+                    backgroundImage: profilePictureUrl != null &&
+                            profilePictureUrl!.isNotEmpty
+                        ? NetworkImage(profilePictureUrl!)
+                        : null,
+                    child: profilePictureUrl == null ||
+                            profilePictureUrl!.isEmpty
+                        ? Text(
+                            avatarLetter,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF8E4A1F),
+                            ),
+                          )
+                        : null,
                   ),
                   Positioned(
                     right: -4,
@@ -259,7 +261,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 const Divider(height: 1, color: ProfileScreen._border),
                 const SizedBox(height: 10),
-                _ProfileStat(value: '${stats.reviews}', label: 'Resenas'),
+                _ProfileStat(value: '${stats.reviews}', label: 'Reseñas'),
                 const SizedBox(height: 10),
               ],
             ),

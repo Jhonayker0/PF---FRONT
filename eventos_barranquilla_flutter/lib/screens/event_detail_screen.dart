@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,11 +8,103 @@ import '../models/event.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_service.dart';
 
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends StatefulWidget {
   const EventDetailScreen({required this.event, this.heroTag, super.key});
 
   final Event event;
   final String? heroTag;
+
+  @override
+  State<EventDetailScreen> createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends State<EventDetailScreen> {
+  late final PageController _imageController;
+  int _currentImageIndex = 0;
+  final Map<int, double> _imageHeights = {};
+  static const double _fallbackImageHeight = 240;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageController = PageController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _measureImageHeights();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _imageController.dispose();
+    super.dispose();
+  }
+
+  List<String> get _images {
+    return widget.event.pictureUrls.isNotEmpty
+        ? widget.event.pictureUrls
+        : [widget.event.imageUrl];
+  }
+
+  double get _currentImageHeight {
+    return _imageHeights[_currentImageIndex] ?? _fallbackImageHeight;
+  }
+
+  double _imageHeightFor(int index) {
+    return _imageHeights[index] ?? _fallbackImageHeight;
+  }
+
+  Future<void> _measureImageHeights() async {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final heights = <int, double>{};
+
+    for (var index = 0; index < _images.length; index++) {
+      final imageUrl = _images[index];
+      final completer = Completer<Size>();
+      final imageProvider = NetworkImage(imageUrl);
+      final stream = imageProvider.resolve(const ImageConfiguration());
+
+      late final ImageStreamListener listener;
+      listener = ImageStreamListener(
+        (imageInfo, synchronousCall) {
+          completer.complete(
+            Size(
+              imageInfo.image.width.toDouble(),
+              imageInfo.image.height.toDouble(),
+            ),
+          );
+          stream.removeListener(listener);
+        },
+        onError: (error, stackTrace) {
+          if (!completer.isCompleted) {
+            completer.complete(const Size(1, _fallbackImageHeight));
+          }
+          stream.removeListener(listener);
+        },
+      );
+
+      stream.addListener(listener);
+
+      try {
+        final size = await completer.future;
+        final ratio = size.height / size.width;
+        heights[index] = screenWidth * ratio;
+      } catch (_) {
+        heights[index] = _fallbackImageHeight;
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _imageHeights
+        ..clear()
+        ..addAll(heights);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,20 +130,80 @@ class EventDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event image with Hero for smooth transition
-            Hero(
-              tag: heroTag ?? 'event_${event.id}',
-              child: SizedBox(
-                width: double.infinity,
-                height: 200,
-                child: Image.network(
-                  event.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, size: 80),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeInOut,
+              height: _currentImageHeight,
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _imageController,
+                    itemCount: _images.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentImageIndex = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final imageUrl = _images[index];
+                      final image = ClipRRect(
+                        borderRadius: BorderRadius.circular(0),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: _imageHeightFor(index),
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[300],
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image, size: 80),
+                          ),
+                        ),
+                      );
+
+                      if (index == 0) {
+                        return Hero(
+                          tag: widget.heroTag ?? 'event_${widget.event.id}',
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: _imageHeightFor(0),
+                            child: image,
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        width: double.infinity,
+                        height: _imageHeightFor(index),
+                        child: image,
+                      );
+                    },
                   ),
-                ),
+                  if (_images.length > 1)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 16,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(_images.length, (index) {
+                          final isActive = index == _currentImageIndex;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            height: 8,
+                            width: isActive ? 22 : 8,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF6C63FF)
+                                  : Colors.white.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                ],
               ),
             ),
             // Event details
@@ -69,7 +223,7 @@ class EventDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      event.category,
+                      widget.event.category,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -80,7 +234,7 @@ class EventDetailScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   // Title
                   Text(
-                    event.title,
+                    widget.event.title,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -98,9 +252,9 @@ class EventDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        event.price == 0.0
+                        widget.event.price == 0.0
                             ? 'Gratis'
-                            : '\$${event.price.toStringAsFixed(0)}',
+                            : '\$${widget.event.price.toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -120,7 +274,7 @@ class EventDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        event.date,
+                        widget.event.date,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -141,7 +295,7 @@ class EventDetailScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          event.location,
+                          widget.event.location,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -163,7 +317,7 @@ class EventDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    event.description,
+                    widget.event.description,
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF666666),
@@ -192,7 +346,7 @@ class EventDetailScreen extends StatelessWidget {
 
                         try {
                           await eventService.attendEvent(
-                            eventId: event.id,
+                            eventId: widget.event.id,
                             userId: user.id,
                           );
                           if (!context.mounted) {

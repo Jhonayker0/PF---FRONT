@@ -50,4 +50,13 @@ class UserService {
     }
     throw ApiException(404, 'User not found');
   }
+
+  Future<void> logout({required String token}) async {
+    await _client.postJson(
+      '/users/logout',
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
 }

@@ -26,7 +26,9 @@ class User {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       role: json['role'] ?? 'client',
-      profilePicture: json['profile_picture'] ?? json['profilePicture'],
+      profilePicture: json['profile_picture_url'] ??
+          json['profile_picture'] ??
+          json['profilePicture'],
       favorites: favorites is List
           ? favorites.map((item) => item.toString()).toList()
           : [],
@@ -42,7 +44,7 @@ class User {
       'name': name,
       'email': email,
       'role': role,
-      'profile_picture': profilePicture,
+      'profile_picture_url': profilePicture,
       'favorites': favorites,
       'attended_events': attendedEvents,
     };

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/user_mock.dart';
 import '../models/event.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_service.dart';
@@ -32,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _errorMessage;
   late TextEditingController _searchController;
   String _searchQuery = '';
-  late Map<String, List<Event>> _eventsByCategory;
+  
   bool _loginPromptShown = false;
 
   @override
@@ -312,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         final isLoggedIn = authProvider.isAuthenticated;
-        final user = isLoggedIn ? mockUser : null;
+        final user = authProvider.user;
         final isAdmin = user?.role == 'admin';
         final theme = Theme.of(context);
 
@@ -344,9 +343,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Text(
                                   isLoggedIn ? 'Bienvenido,' : 'Explora eventos',
                                   style: const TextStyle(
-                                Text(
-                                  isLoggedIn ? 'Bienvenido,' : 'Explora eventos',
-                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF8A7F73),
                                     fontWeight: FontWeight.w500,
@@ -354,7 +350,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  isLoggedIn ? user!.name : 'Agenda cultural de Barranquilla',
+                                    isLoggedIn && user != null
+                                      ? user.name
+                                      : 'Agenda cultural de Barranquilla',
                                   style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
@@ -363,6 +361,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ],
                             ),
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.notifications_none),
+                            color: const Color(0xFF1F1A17),
                           ),
                         ],
                       ),
