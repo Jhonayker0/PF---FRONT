@@ -182,8 +182,20 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final currentIndex = _locationToIndex(location);
+    final isAdmin = context.watch<AuthProvider>().user?.isAdmin ?? false;
+    final showCreateButton = currentIndex == 0 && isAdmin;
 
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: showCreateButton
+          ? FloatingActionButton(
+              onPressed: () => context.go('/create-event'),
+              backgroundColor: const Color(0xFFCE1126),
+              foregroundColor: Colors.white,
+              elevation: 6,
+              child: const Icon(Icons.add, size: 30),
+            )
+          : null,
       body: child,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,

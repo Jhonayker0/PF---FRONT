@@ -4,7 +4,7 @@ class ApiConfig {
     if (value.isNotEmpty) {
       return value;
     }
-    return 'https://back-cumbe-users.achesito.xyz';
+    return 'https://back-cumbe-users.onrender.com';
   }
 
   static String get eventBaseUrl {
@@ -12,6 +12,6 @@ class ApiConfig {
     if (value.isNotEmpty) {
       return value;
     }
-    return 'https://back-cumbe-events.achesito.xyz';
+    return 'https://back-cumbe-events.onrender.com';
   }
 }

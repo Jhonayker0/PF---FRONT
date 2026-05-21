@@ -21,7 +21,7 @@ class ProfileScreen extends StatelessWidget {
         final isLoggedIn = authProvider.isAuthenticated;
         final user = isLoggedIn ? authProvider.user : null;
         final stats = isLoggedIn ? authProvider.profileStats : null;
-        final roleLabel = user?.role == 'admin' ? 'Organizador' : 'Invitado';
+        final roleLabel = user?.isAdmin == true ? 'Organizador' : 'Invitado';
         final trimmedName = user?.name.trim() ?? '';
         final avatarLetter = trimmedName.isNotEmpty
             ? trimmedName.substring(0, 1).toUpperCase()
@@ -405,50 +405,58 @@ class _ProfilePromoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ProfileScreen._surface,
+    return Material(
+      color: ProfileScreen._surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: ProfileScreen._border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 56,
-            width: 56,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5EFE7),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.emoji_people,
-              color: ProfileScreen._primary,
-            ),
+        onTap: () => context.go('/create-event'),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: ProfileScreen._border),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Conviertete en anfitrion',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 16,
-                    color: ProfileScreen._textPrimary,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5EFE7),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Comparte tus eventos y gana ingresos extra.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: ProfileScreen._textMuted,
-                  ),
+                child: const Icon(
+                  Icons.emoji_people,
+                  color: ProfileScreen._primary,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Conviertete en anfitrion',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 16,
+                        color: ProfileScreen._textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Toca aquí para crear tu próximo evento.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ProfileScreen._textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: ProfileScreen._textMuted),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

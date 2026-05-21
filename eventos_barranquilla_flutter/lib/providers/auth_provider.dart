@@ -15,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
   String? get token => _token;
+  bool isFavorite(String eventId) => _user?.favorites.contains(eventId) ?? false;
 
   ProfileStats get profileStats {
     final eventsCount = _user?.attendedEvents.length ?? 0;
@@ -93,5 +94,43 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     _token = null;
     notifyListeners();
+  }
+
+  Future<bool> toggleFavorite(String eventId) async {
+    final currentUser = _user;
+    final currentToken = _token;
+
+    if (currentUser == null || currentToken == null || currentToken.isEmpty) {
+      _errorMessage = 'Debes iniciar sesión para guardar eventos.';
+      notifyListeners();
+      return false;
+    }
+
+    final currentlyFavorite = currentUser.favorites.contains(eventId);
+
+    try {
+      if (currentlyFavorite) {
+        await _userService.removeFavorite(
+          userId: currentUser.id,
+          eventId: eventId,
+          token: currentToken,
+        );
+        currentUser.favorites.remove(eventId);
+      } else {
+        await _userService.addFavorite(
+          userId: currentUser.id,
+          eventId: eventId,
+          token: currentToken,
+        );
+        currentUser.favorites.add(eventId);
+      }
+
+      notifyListeners();
+      return !currentlyFavorite;
+    } catch (e) {
+      _errorMessage = 'No se pudo actualizar favoritos: $e';
+      notifyListeners();
+      rethrow;
+    }
   }
 }

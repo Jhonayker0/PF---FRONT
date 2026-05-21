@@ -59,4 +59,30 @@ class UserService {
       },
     );
   }
+
+  Future<void> addFavorite({
+    required String userId,
+    required String eventId,
+    required String token,
+  }) async {
+    await _client.postJson(
+      '/users/$userId/favorites/$eventId',
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  Future<void> removeFavorite({
+    required String userId,
+    required String eventId,
+    required String token,
+  }) async {
+    await _client.deleteJson(
+      '/users/$userId/favorites/$eventId',
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
 }

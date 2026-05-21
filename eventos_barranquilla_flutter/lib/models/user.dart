@@ -18,6 +18,16 @@ class User {
   })  : favorites = favorites ?? [],
         attendedEvents = attendedEvents ?? [];
 
+  String get normalizedRole => role.trim().toLowerCase();
+
+  bool get isAdmin {
+    final normalized = normalizedRole;
+    return normalized == 'admin' ||
+        normalized == 'administrator' ||
+        normalized == 'organizer' ||
+        normalized == 'organizador';
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     final favorites = json['favorites'];
     final attended = json['attended_events'] ?? json['attendedEvents'];
@@ -25,7 +35,7 @@ class User {
       id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
-      role: json['role'] ?? 'client',
+      role: (json['role'] ?? 'client').toString().trim().toLowerCase(),
       profilePicture: json['profile_picture_url'] ??
           json['profile_picture'] ??
           json['profilePicture'],

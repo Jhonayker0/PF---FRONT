@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../models/event.dart';
+import '../data/event_categories.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_service.dart';
+import '../widgets/category_browser.dart';
 import '../widgets/event_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,14 +18,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final EventService _eventService = EventService();
-  static const List<String> _defaultCategories = [
-    'Festival',
-    'Música',
-    'Arte',
-    'Cultura',
-    'Deporte',
-    'Gastronomía',
-  ];
 
   List<Event> _featuredEvents = [];
   Map<String, List<Event>> _eventsByCategory = {};
@@ -31,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _errorMessage;
   late TextEditingController _searchController;
   String _searchQuery = '';
+  String? _selectedGeneralCategory;
+  String? _selectedSpecificCategory;
   
   bool _loginPromptShown = false;
 
@@ -67,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final popularEvents = await _eventService.fetchPopularEvents();
       final categories = await Future.wait(
-        _defaultCategories.map((category) async {
+        EventCategories.generalCategories.map((category) async {
           final events = await _eventService.fetchEventsByCategory(category);
           return MapEntry(category, events);
         }),
@@ -98,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _eventsByCategory = groupedByCategory.isNotEmpty
             ? groupedByCategory
           : _groupEventsByCategory(allEvents);
+        // leave selection empty by default so all events are visible
         _isLoading = false;
       });
     } catch (e) {
@@ -111,32 +108,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, List<Event>> _groupEventsByCategory(List<Event> events) {
     final Map<String, List<Event>> grouped = {};
     for (final event in events) {
-      if (!grouped.containsKey(event.category)) {
-        grouped[event.category] = [];
+      final categoryGroup = event.categoryGroup.isNotEmpty
+          ? event.categoryGroup
+          : event.category;
+      if (!grouped.containsKey(categoryGroup)) {
+        grouped[categoryGroup] = [];
       }
-      grouped[event.category]!.add(event);
+      grouped[categoryGroup]!.add(event);
     }
     return grouped;
   }
 
   List<Event> _filterEvents(List<Event> events) {
-    if (_searchQuery.isEmpty) {
-      return events;
-    }
     final query = _searchQuery.toLowerCase();
-    return events
-        .where((event) =>
-            event.title.toLowerCase().contains(query) ||
-            event.category.toLowerCase().contains(query) ||
-            event.location.toLowerCase().contains(query) ||
-            event.description.toLowerCase().contains(query))
-        .toList();
+    return events.where((event) {
+      final matchesQuery = _searchQuery.isEmpty ||
+          event.title.toLowerCase().contains(query) ||
+          event.category.toLowerCase().contains(query) ||
+          event.categoryGroup.toLowerCase().contains(query) ||
+          event.categorySpecific.toLowerCase().contains(query) ||
+          event.location.toLowerCase().contains(query) ||
+          event.description.toLowerCase().contains(query);
+
+      final matchesGeneral = _selectedGeneralCategory == null ||
+          event.categoryGroup == _selectedGeneralCategory ||
+          event.category == _selectedGeneralCategory;
+
+      final matchesSpecific = _selectedSpecificCategory == null ||
+          _selectedSpecificCategory!.isEmpty ||
+          event.categorySpecific == _selectedSpecificCategory ||
+          event.category == _selectedSpecificCategory;
+
+      return matchesQuery && matchesGeneral && matchesSpecific;
+    }).toList();
   }
 
   Map<String, List<Event>> _getFilteredEventsByCategory() {
-    if (_searchQuery.isEmpty) {
-      return _eventsByCategory;
-    }
     final filtered = <String, List<Event>>{};
     for (final entry in _eventsByCategory.entries) {
       final categoryEvents = _filterEvents(entry.value);
@@ -146,6 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return filtered;
   }
+
+  bool get _hasActiveCategoryFilter =>
+      _selectedGeneralCategory != null || _selectedSpecificCategory != null;
 
   Future<void> _showLoginPrompt() async {
     if (!mounted) {
@@ -312,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, authProvider, child) {
         final isLoggedIn = authProvider.isAuthenticated;
         final user = authProvider.user;
-        final isAdmin = user?.role == 'admin';
+        final isAdmin = user?.isAdmin ?? false;
         final theme = Theme.of(context);
 
         return Scaffold(
@@ -387,28 +397,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    // Action button or search
+                    // Search
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: isAdmin
-                          ? SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFCE1126),
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                onPressed: () => context.go('/create-event'),
-                                icon: const Icon(Icons.add),
-                                label: const Text('Crear Nuevo Evento'),
-                              ),
-                            )
-                          : TextField(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
                               controller: _searchController,
                               onChanged: (value) {
                                 setState(() {
@@ -452,8 +447,53 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            height: 56,
+                            width: 56,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: const Color(0xFFE7DFD4),
+                              ),
+                            ),
+                            child: IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.tune),
+                              color: const Color(0xFF8A7F73),
+                              tooltip: 'Filtros próximamente',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 28),
+                    CategoryBrowser(
+                      generalCategories: EventCategories.generalCategories,
+                      specificCategories: EventCategories.catalog,
+                      selectedGeneral: _selectedGeneralCategory,
+                      selectedSpecific: _selectedSpecificCategory,
+                      onGeneralSelected: (generalCategory) {
+                        setState(() {
+                          if (_selectedGeneralCategory == generalCategory) {
+                            // toggle off if already selected
+                            _selectedGeneralCategory = null;
+                            _selectedSpecificCategory = null;
+                          } else {
+                            _selectedGeneralCategory = generalCategory;
+                            _selectedSpecificCategory = null;
+                          }
+                        });
+                      },
+                      onSpecificSelected: (specificCategory) {
+                        setState(() {
+                          _selectedSpecificCategory = specificCategory;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     if (_isLoading)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32),
@@ -486,14 +526,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     else if (_searchQuery.isEmpty)
                       Column(
                         children: [
-                          // Discover carousel
-                          DiscoverEvents(
-                            events: _featuredEvents,
-                            themeData: theme,
-                          ),
-                          const SizedBox(height: 28),
+                          if (!_hasActiveCategoryFilter) ...[
+                            // Discover carousel
+                            DiscoverEvents(
+                              events: _featuredEvents,
+                              themeData: theme,
+                            ),
+                            const SizedBox(height: 28),
+                          ],
                           // Scrolling events by category
-                          ..._eventsByCategory.entries.map((entry) {
+                          ..._getFilteredEventsByCategory().entries.map((entry) {
                             final category = entry.key;
                             final categoryEvents = entry.value;
                             return Column(
@@ -522,9 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          ..._getFilteredEventsByCategory()
-                              .entries
-                              .map((entry) {
+                          ..._getFilteredEventsByCategory().entries.map((entry) {
                             final category = entry.key;
                             final categoryEvents = entry.value;
                             return Column(

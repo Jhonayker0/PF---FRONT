@@ -151,7 +151,7 @@ class _DiscoverCard extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          event.category,
+                          event.categoryLabel,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -496,7 +496,7 @@ class _CategoryEventCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            event.category,
+                            event.categoryLabel,
                             style: TextStyle(
                               color: Color(0xFF6C63FF),
                               fontSize: 12,
