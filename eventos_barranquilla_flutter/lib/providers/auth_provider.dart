@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../models/profile_stats.dart';
@@ -11,6 +13,7 @@ class AuthProvider extends ChangeNotifier {
   String? _token;
   final UserService _userService = UserService();
   final FcmService _fcmService = FcmService();
+  StreamSubscription<String>? _fcmTokenSubscription;
 
   User? get user => _user;
   bool get isLoading => _isLoading;
@@ -36,6 +39,7 @@ class AuthProvider extends ChangeNotifier {
       _token = token;
       _user = fetchedUser;
       await _syncFcmToken(fetchedUser.id);
+      _startFcmTokenListener(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -72,6 +76,7 @@ class AuthProvider extends ChangeNotifier {
         attendedEvents: fetchedUser.attendedEvents,
       );
       await _syncFcmToken(fetchedUser.id);
+      _startFcmTokenListener(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -97,6 +102,8 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _errorMessage = null;
     _token = null;
+    await _fcmTokenSubscription?.cancel();
+    _fcmTokenSubscription = null;
     notifyListeners();
   }
 
@@ -148,5 +155,25 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {
       // Ignore token sync errors for now.
     }
+  }
+
+  void _startFcmTokenListener(String userId) {
+    _fcmTokenSubscription?.cancel();
+    _fcmTokenSubscription = _fcmService.onTokenRefresh().listen((token) async {
+      if (token.isEmpty) {
+        return;
+      }
+      try {
+        await _userService.updateFcmToken(userId: userId, fcmToken: token);
+      } catch (_) {
+        // Ignore token refresh sync errors for now.
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _fcmTokenSubscription?.cancel();
+    super.dispose();
   }
 }

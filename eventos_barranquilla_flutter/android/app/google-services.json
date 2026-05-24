@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1064068048251",
+    "project_id": "back-cumbe",
+    "storage_bucket": "back-cumbe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064068048251:android:0bfa1b8e68aad6c149c9de",
+        "android_client_info": {
+          "package_name": "com.example.eventos_barranquilla_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUgspmm3xnXa-LW8x_eejgacQNeANDLN4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
