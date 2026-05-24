@@ -51,6 +51,13 @@ class UserService {
     throw ApiException(404, 'User not found');
   }
 
+  Future<void> updateFcmToken({
+    required String userId,
+    required String fcmToken,
+  }) async {
+    await _client.putJson('/users/$userId/fcm_token?fcm_token=$fcmToken');
+  }
+
   Future<void> logout({required String token}) async {
     await _client.postJson(
       '/users/logout',
