@@ -9,9 +9,11 @@ import 'screens/event_detail_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/my_events_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/edit_profile_screen.dart';
 
 class EventosBarranquillaApp extends StatelessWidget {
   const EventosBarranquillaApp({super.key});
@@ -134,8 +136,16 @@ class EventosBarranquillaApp extends StatelessWidget {
               builder: (context, state) => const FavoritesScreen(),
             ),
             GoRoute(
+              path: '/my-events',
+              builder: (context, state) => const MyEventsScreen(),
+            ),
+            GoRoute(
               path: '/profile',
               builder: (context, state) => const ProfileScreen(),
+            ),
+            GoRoute(
+              path: '/profile/edit',
+              builder: (context, state) => const EditProfileScreen(),
             ),
           ],
         ),
@@ -172,8 +182,11 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
     if (location.startsWith('/favorites')) {
       return 1;
     }
-    if (location.startsWith('/profile')) {
+    if (location.startsWith('/my-events')) {
       return 2;
+    }
+    if (location.startsWith('/profile')) {
+      return 3;
     }
     return 0;
   }
@@ -198,13 +211,28 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
           : null,
       body: child,
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: currentIndex,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFCE1126),
+        unselectedItemColor: const Color(0xFF8A847D),
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
         onTap: (index) {
           switch (index) {
             case 1:
               context.go('/favorites');
               break;
             case 2:
+              context.go('/my-events');
+              break;
+            case 3:
               context.go('/profile');
               break;
             default:
@@ -219,6 +247,10 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite_border),
             label: 'Favoritos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_note_outlined),
+            label: 'Mis eventos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import '../models/user.dart';
 import 'api_client.dart';
 import 'api_config.dart';
@@ -91,5 +94,87 @@ class UserService {
         'Authorization': 'Bearer $token',
       },
     );
+  }
+
+  Future<String> uploadProfilePicture({
+    required String userId,
+    required String filePath,
+    String? token,
+  }) async {
+    return _sendProfileImageRequest(
+      method: 'POST',
+      path: '/users/$userId/upload-profile-picture',
+      filePath: filePath,
+      token: token,
+    );
+  }
+
+  Future<String> updateProfilePicture({
+    required String userId,
+    required String filePath,
+    String? token,
+  }) async {
+    return _sendProfileImageRequest(
+      method: 'PUT',
+      path: '/users/$userId/profile-picture',
+      filePath: filePath,
+      token: token,
+    );
+  }
+
+  Future<void> deleteProfilePicture({
+    required String userId,
+    String? token,
+  }) async {
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
+    await _client.deleteJson('/users/$userId/profile-picture', headers: headers);
+  }
+
+  Future<User> updateUser({
+    required String userId,
+    required Map<String, dynamic> body,
+    String? token,
+  }) async {
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
+    final data = await _client.putJson('/users/$userId', headers: headers, body: body);
+    if (data is Map<String, dynamic>) {
+      return User.fromJson(data);
+    }
+    throw ApiException(500, 'Invalid update response');
+  }
+
+  Future<String> _sendProfileImageRequest({
+    required String method,
+    required String path,
+    required String filePath,
+    String? token,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.userBaseUrl}$path');
+    final request = http.MultipartRequest(method, uri);
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    request.headers['Accept'] = 'application/json';
+    request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    final streamed = await request.send();
+    final body = await streamed.stream.bytesToString();
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      throw ApiException(streamed.statusCode, body);
+    }
+    if (body.isEmpty) {
+      return '';
+    }
+    final decoded = jsonDecode(body);
+    if (decoded is Map<String, dynamic> && decoded['url'] is String) {
+      return decoded['url'] as String;
+    }
+    if (decoded is Map<String, dynamic> && decoded['profile_picture_url'] is String) {
+      return decoded['profile_picture_url'] as String;
+    }
+    return '';
   }
 }

@@ -161,6 +161,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final isFavorite = authProvider.isFavorite(widget.event.id);
+    final isOrganizer = authProvider.user?.isAdmin ?? false;
     final eventService = EventService();
 
     return Scaffold(
@@ -402,25 +403,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   color: Color(0xFF242424),
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              if (_isLoadingOrganizer)
-                                const Text(
-                                  'Cargando organizador...',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF7E7E7E),
-                                  ),
-                                )
-                              else
-                                Text(
-                                  _organizerLookupId.isNotEmpty
-                                      ? 'ID organizador: $_organizerLookupId'
-                                      : 'Información del organizador',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF7E7E7E),
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -448,14 +430,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF28B38),
+                        backgroundColor: isOrganizer ? const Color(0xFFD9D2CA) : const Color(0xFFF28B38),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
                       ),
-                      onPressed: () async {
+                      onPressed: isOrganizer
+                          ? null
+                          : () async {
                         final user = authProvider.user;
                         if (user == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -525,16 +509,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           }
                         }
                       },
-                        icon: _isTogglingRegister
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                          : Icon(_isRegistered ? Icons.check_circle : Icons.check_circle_outline),
-                        label: _isTogglingRegister
-                          ? const Text('Procesando...')
-                          : Text(_isRegistered ? 'Registrado' : 'Registrarme'),
+                      icon: isOrganizer
+                          ? const Icon(Icons.block_outlined)
+                          : _isTogglingRegister
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Icon(_isRegistered ? Icons.check_circle : Icons.check_circle_outline),
+                      label: isOrganizer
+                          ? const Text('Solo favoritos para organizadores')
+                          : _isTogglingRegister
+                              ? const Text('Procesando...')
+                              : Text(_isRegistered ? 'Registrado' : 'Registrarme'),
                     ),
                   ),
                   const SizedBox(height: 12),

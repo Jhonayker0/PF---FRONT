@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -16,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late TextEditingController _passwordController;
   late TextEditingController _confirmPasswordController;
   String _role = 'client';
+  String? _profileImagePath;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -53,7 +58,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextButton.icon(
                       onPressed: authProvider.isLoading
                           ? null
-                          : () => context.pop(),
+                          : () {
+                              if (Navigator.of(context).canPop()) {
+                                context.pop();
+                              } else {
+                                context.go('/login');
+                              }
+                            },
                       icon: const Icon(Icons.arrow_back),
                       label: const Text('Volver'),
                     ),
@@ -75,6 +86,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
+                    // Profile photo picker
+                    Center(
+                      child: GestureDetector(
+                        onTap: authProvider.isLoading
+                            ? null
+                            : () async {
+                                final XFile? picked = await _picker.pickImage(
+                                  source: ImageSource.gallery,
+                                  maxWidth: 800,
+                                  imageQuality: 80,
+                                );
+                                if (picked != null) {
+                                  setState(() => _profileImagePath = picked.path);
+                                }
+                              },
+                        child: CircleAvatar(
+                          radius: 44,
+                          backgroundColor: const Color(0xFFF3E6D8),
+                          backgroundImage: _profileImagePath != null
+                              ? FileImage(File(_profileImagePath!)) as ImageProvider
+                              : null,
+                          child: _profileImagePath == null
+                              ? const Icon(Icons.camera_alt, size: 30, color: Color(0xFF8E4A1F))
+                              : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
                     // Name input
                     TextField(
                       controller: _nameController,
@@ -276,6 +316,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               _passwordController.text,
                               _nameController.text,
                               _role,
+                              profileImagePath: _profileImagePath,
                             );
 
                             if (success && mounted) {

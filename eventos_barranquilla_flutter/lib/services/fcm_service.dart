@@ -2,6 +2,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class FcmService {
+  Future<String?> obtenerFcmToken() {
+    return requestAndGetToken();
+  }
+
   Future<String?> requestAndGetToken() async {
     final messaging = FirebaseMessaging.instance;
     final settings = await messaging.requestPermission(

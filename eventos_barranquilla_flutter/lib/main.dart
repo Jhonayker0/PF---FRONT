@@ -7,7 +7,11 @@ import 'providers/auth_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {
+    // Allow the app to run even when Firebase config is not present.
+  }
 
   runApp(
     MultiProvider(

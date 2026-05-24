@@ -219,22 +219,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               const SizedBox(height: 18),
-                              Container(
-                                height: 56,
-                                width: 56,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.16),
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.account_circle_outlined,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              ),
                               const SizedBox(height: 16),
                               const Text(
                                 'Inicia sesión para una experiencia completa',
@@ -246,14 +230,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Sin sesión puedes explorar, pero al entrar podrás ver tu perfil, favoritos y contenido personalizado.',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  height: 1.45,
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -265,13 +241,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               _PromptFeatureRow(
                                 icon: Icons.verified_user_outlined,
                                 title: 'Perfil y estadísticas',
-                                subtitle: 'Verás tu información y progreso dentro de la app.',
+                                subtitle: "",
                               ),
                               const SizedBox(height: 14),
                               _PromptFeatureRow(
                                 icon: Icons.favorite_border,
                                 title: 'Favoritos y guardados',
-                                subtitle: 'Accede a tus eventos preferidos desde cualquier pantalla.',
+                                subtitle: '',
                               ),
                               const SizedBox(height: 20),
                               SizedBox(

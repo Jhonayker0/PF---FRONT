@@ -21,7 +21,7 @@ class ProfileScreen extends StatelessWidget {
         final isLoggedIn = authProvider.isAuthenticated;
         final user = isLoggedIn ? authProvider.user : null;
         final stats = isLoggedIn ? authProvider.profileStats : null;
-        final roleLabel = user?.isAdmin == true ? 'Organizador' : 'Invitado';
+        final roleLabel = user?.isAdmin == true ? 'Organizador' : 'Usuario';
         final trimmedName = user?.name.trim() ?? '';
         final avatarLetter = trimmedName.isNotEmpty
             ? trimmedName.substring(0, 1).toUpperCase()
@@ -50,7 +50,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   const _ProfileQuickActions(),
                   const SizedBox(height: 16),
-                  const _ProfilePromoCard(),
+                  if (user?.isAdmin == true) const _ProfilePromoCard(),
                   const SizedBox(height: 18),
                 ] else ...[
                   Container(
@@ -87,9 +87,17 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                 ],
-                const _ProfileListItem(
+                _ProfileListItem(
                   text: 'Configuracion de cuenta',
                   icon: Icons.settings_outlined,
+                  onTap: () {
+                    final auth = context.read<AuthProvider>();
+                    if (auth.isAuthenticated) {
+                      context.go('/profile/edit');
+                    } else {
+                      context.go('/login');
+                    }
+                  },
                 ),
                 const _ProfileListItem(text: 'Ayuda', icon: Icons.help_outline),
                 const _ProfileListItem(
