@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../models/profile_stats.dart';
+import '../services/fcm_service.dart';
 import '../services/user_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -9,6 +10,7 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   String? _token;
   final UserService _userService = UserService();
+  final FcmService _fcmService = FcmService();
 
   User? get user => _user;
   bool get isLoading => _isLoading;
@@ -33,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
       final fetchedUser = await _userService.fetchUser(userId);
       _token = token;
       _user = fetchedUser;
+      await _syncFcmToken(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -68,6 +71,7 @@ class AuthProvider extends ChangeNotifier {
         favorites: fetchedUser.favorites,
         attendedEvents: fetchedUser.attendedEvents,
       );
+      await _syncFcmToken(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -131,6 +135,18 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = 'No se pudo actualizar favoritos: $e';
       notifyListeners();
       rethrow;
+    }
+  }
+
+  Future<void> _syncFcmToken(String userId) async {
+    try {
+      final token = await _fcmService.obtenerFcmToken();
+      if (token == null || token.isEmpty) {
+        return;
+      }
+      await _userService.updateFcmToken(userId: userId, fcmToken: token);
+    } catch (_) {
+      // Ignore token sync errors for now.
     }
   }
 }
