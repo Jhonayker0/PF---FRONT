@@ -150,8 +150,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(20)),
                                             child: loadingFav
-                                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF28B38)))
-                                                : const Icon(Icons.bookmark_remove, size: 18, color: Color(0xFFF28B38)),
+                                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFCE1126)))
+                                                : const Icon(Icons.bookmark_remove, size: 18, color: Color(0xFFCE1126)),
                                           ),
                                         ),
                                       ),

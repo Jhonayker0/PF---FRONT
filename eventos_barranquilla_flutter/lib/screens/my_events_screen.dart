@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/event.dart';
+import '../models/event_attendee.dart';
 import '../providers/auth_provider.dart';
+import '../services/api_client.dart';
 import '../services/event_service.dart';
+import '../services/payment_service.dart';
 import 'edit_event_screen.dart';
 import 'event_detail_screen.dart';
 
@@ -17,6 +23,7 @@ class MyEventsScreen extends StatefulWidget {
 
 class _MyEventsScreenState extends State<MyEventsScreen> {
   final EventService _eventService = EventService();
+  final PaymentService _paymentService = PaymentService();
 
   bool _isLoading = true;
   List<Event> _events = [];
@@ -91,17 +98,299 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
   }
 
   Future<void> _deleteEvent(Event event) async {
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       await _eventService.deleteEvent(event.id);
       if (!mounted) return;
       await _loadEvents();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Evento eliminado: ${event.title}')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Evento eliminado: ${event.title}')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar el evento: $e')),
+      messenger.showSnackBar(SnackBar(content: Text('No se pudo eliminar el evento: $e')));
+    }
+  }
+
+  Uint8List _decodeQrImage(String value) {
+    final normalized = value.startsWith('data:image') ? value.split(',').last : value;
+    return base64Decode(normalized);
+  }
+
+  Future<void> _showPaymentQrDialog(
+    Event event,
+    EventAttendee attendee,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final organizerToken = context.read<AuthProvider>().token;
+
+    try {
+      final payment = await _paymentService.initiatePayment(
+        userId: attendee.id,
+        eventId: event.id,
+        token: organizerToken,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('QR de pago generado'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(event.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  Text('Asistente: ${attendee.displayName}'),
+                  const SizedBox(height: 14),
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.memory(
+                        _decodeQrImage(payment.qrCodeBase64),
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text('Estado: ${payment.status}'),
+                  const SizedBox(height: 4),
+                  SelectableText(payment.qrToken),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cerrar'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      final errorText = e.toString();
+
+      if (e is ApiException) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Error generando QR de pago'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Código: ${e.statusCode}'),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Respuesta del backend:',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(e.message),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Request:',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText('user_id=${attendee.id}\nevent_id=${event.id}'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cerrar'),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo generar el QR de pago: $errorText')),
+      );
+    }
+  }
+
+  Future<void> _showPaymentVerification(Event event) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final user = context.read<AuthProvider>().user;
+    if (user == null || !user.isAdmin) {
+      return;
+    }
+
+    try {
+      final attendees = await _eventService.fetchAttendees(event.id);
+      if (!mounted) {
+        return;
+      }
+
+      if (attendees.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Todavía no hay asistentes para este evento')),
+        );
+        return;
+      }
+
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 24,
+                    offset: Offset(0, -8),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 46,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'Selecciona un asistente',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: const Color(0xFF1F1A17),
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        event.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black.withValues(alpha: 0.58),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(sheetContext).size.height * 0.65,
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: attendees.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final attendee = attendees[index];
+                            return Material(
+                              color: const Color(0xFFF8F3EA),
+                              borderRadius: BorderRadius.circular(18),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(18),
+                                onTap: () async {
+                                  Navigator.pop(sheetContext);
+                                  await _showPaymentQrDialog(event, attendee);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor: const Color(0xFFEAF6EC),
+                                        backgroundImage: attendee.profilePicture != null && attendee.profilePicture!.isNotEmpty
+                                            ? NetworkImage(attendee.profilePicture!)
+                                            : null,
+                                        child: attendee.profilePicture == null || attendee.profilePicture!.isEmpty
+                                            ? Text(
+                                                attendee.displayName.isNotEmpty ? attendee.displayName.substring(0, 1).toUpperCase() : 'A',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF078930),
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              attendee.displayName,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF1F1A17),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              attendee.email.isNotEmpty ? attendee.email : attendee.id,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF6B645C),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.chevron_right, color: Color(0xFF8A847D)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudieron cargar los asistentes: $e')),
       );
     }
   }
@@ -201,11 +490,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () {
                           Navigator.pop(sheetContext);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Verificar pago aún no está conectado'),
-                            ),
-                          );
+                          _showPaymentVerification(event);
                         },
                         icon: const Icon(Icons.receipt_long_outlined),
                         label: const Text('Verificar pago'),
@@ -277,7 +562,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                         Icon(
                           isAdmin ? Icons.event_available_outlined : Icons.event_note_outlined,
                           size: 72,
-                          color: const Color(0xFFCE1126).withValues(alpha: 0.75),
+                          color: const Color(0xFF078930).withValues(alpha: 0.75),
                         ),
                         const SizedBox(height: 14),
                         Padding(
@@ -297,23 +582,24 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final event = _events[index];
-                        return Material(
+                        return Card(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
                           elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(18),
-                              onTap: isAdmin
-                                  ? () => _showOrganizerActions(event)
-                                  : () => Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => EventDetailScreen(event: event),
-                                        ),
+                            onTap: isAdmin
+                                ? () => _showOrganizerActions(event)
+                                : () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => EventDetailScreen(event: event),
                                       ),
+                                    ),
                             child: Padding(
                               padding: const EdgeInsets.all(14),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(14),
@@ -369,7 +655,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFFFF2E8),
+                                              color: const Color(0xFFEAF6EC),
                                               borderRadius: BorderRadius.circular(999),
                                             ),
                                             child: Text(
@@ -377,7 +663,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w700,
-                                                color: Color(0xFFB65B18),
+                                                color: Color(0xFF078930),
                                               ),
                                             ),
                                           ),

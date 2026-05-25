@@ -281,7 +281,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   decoration: InputDecoration(filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF6C63FF)),
+                      const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF078930)),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -446,7 +446,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
+                    backgroundColor: const Color(0xFF078930),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: _isSubmitting

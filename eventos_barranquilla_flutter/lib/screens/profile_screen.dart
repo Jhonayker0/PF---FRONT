@@ -21,6 +21,7 @@ class ProfileScreen extends StatelessWidget {
         final isLoggedIn = authProvider.isAuthenticated;
         final user = isLoggedIn ? authProvider.user : null;
         final stats = isLoggedIn ? authProvider.profileStats : null;
+        final isAdminUser = authProvider.user?.isAdmin ?? false;
         final roleLabel = user?.isAdmin == true ? 'Organizador' : 'Usuario';
         final trimmedName = user?.name.trim() ?? '';
         final avatarLetter = trimmedName.isNotEmpty
@@ -46,11 +47,16 @@ class ProfileScreen extends StatelessWidget {
                     avatarLetter: avatarLetter,
                     profilePictureUrl: user.profilePicture,
                     stats: stats!,
+                    onHeaderTap: () => context.push('/smart-id-usuario'),
+                    onEventsTap: () => context.go('/my-events'),
+                    onReviewsTap: () => context.push('/my-reviews'),
                   ),
                   const SizedBox(height: 20),
-                  const _ProfileQuickActions(),
+                  _ProfileQuickActions(
+                    onScanPaymentTap: () => context.push('/scan-payment'),
+                  ),
                   const SizedBox(height: 16),
-                  if (user?.isAdmin == true) const _ProfilePromoCard(),
+                  if (isAdminUser) const _ProfilePromoCard(),
                   const SizedBox(height: 18),
                 ] else ...[
                   Container(
@@ -174,6 +180,9 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.avatarLetter,
     required this.profilePictureUrl,
     required this.stats,
+    required this.onHeaderTap,
+    required this.onEventsTap,
+    required this.onReviewsTap,
   });
 
   final String name;
@@ -181,6 +190,9 @@ class _ProfileHeaderCard extends StatelessWidget {
   final String avatarLetter;
   final String? profilePictureUrl;
   final ProfileStats stats;
+  final VoidCallback onHeaderTap;
+  final VoidCallback onEventsTap;
+  final VoidCallback onReviewsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -201,75 +213,98 @@ class _ProfileHeaderCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  CircleAvatar(
-                    radius: 38,
-                    backgroundColor: const Color(0xFFF3E6D8),
-                    backgroundImage: profilePictureUrl != null &&
-                            profilePictureUrl!.isNotEmpty
-                        ? NetworkImage(profilePictureUrl!)
-                        : null,
-                    child: profilePictureUrl == null ||
-                            profilePictureUrl!.isEmpty
-                        ? Text(
-                            avatarLetter,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF8E4A1F),
+          Expanded(
+            flex: 3,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: onHeaderTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          CircleAvatar(
+                            radius: 38,
+                            backgroundColor: const Color(0xFFF3E6D8),
+                            backgroundImage: profilePictureUrl != null &&
+                                    profilePictureUrl!.isNotEmpty
+                                ? NetworkImage(profilePictureUrl!)
+                                : null,
+                            child: profilePictureUrl == null ||
+                                    profilePictureUrl!.isEmpty
+                                ? Text(
+                                    avatarLetter,
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF8E4A1F),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            right: -4,
+                            bottom: -2,
+                            child: Container(
+                              height: 22,
+                              width: 22,
+                              decoration: BoxDecoration(
+                                color: ProfileScreen._primary,
+                                borderRadius: BorderRadius.circular(11),
+                                border: Border.all(color: ProfileScreen._surface),
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 14,
+                              ),
                             ),
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    right: -4,
-                    bottom: -2,
-                    child: Container(
-                      height: 22,
-                      width: 22,
-                      decoration: BoxDecoration(
-                        color: ProfileScreen._primary,
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(color: ProfileScreen._surface),
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 14,
+                      const SizedBox(height: 12),
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: ProfileScreen._textPrimary,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        roleLabel,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: ProfileScreen._textMuted,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                name,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: ProfileScreen._textPrimary,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                roleLabel,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: ProfileScreen._textMuted,
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(width: 18),
           Expanded(
+            flex: 2,
             child: Column(
               children: [
-                _ProfileStat(value: '${stats.events}', label: 'Eventos'),
+                _ProfileStat(
+                  value: '${stats.events}',
+                  label: 'Eventos',
+                  onTap: onEventsTap,
+                ),
                 const SizedBox(height: 10),
                 const Divider(height: 1, color: ProfileScreen._border),
                 const SizedBox(height: 10),
-                _ProfileStat(value: '${stats.reviews}', label: 'Reseñas'),
+                _ProfileStat(
+                  value: '${stats.reviews}',
+                  label: 'Reseñas',
+                  onTap: onReviewsTap,
+                ),
                 const SizedBox(height: 10),
               ],
             ),
@@ -281,14 +316,15 @@ class _ProfileHeaderCard extends StatelessWidget {
 }
 
 class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({required this.value, required this.label});
+  const _ProfileStat({required this.value, required this.label, this.onTap});
 
   final String value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -306,25 +342,44 @@ class _ProfileStat extends StatelessWidget {
         ),
       ],
     );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: content,
+        ),
+      ),
+    );
   }
 }
 
 class _ProfileQuickActions extends StatelessWidget {
-  const _ProfileQuickActions();
+  const _ProfileQuickActions({required this.onScanPaymentTap});
+
+  final VoidCallback onScanPaymentTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const [
+      children: [
         Expanded(
           child: _ProfileActionCard(
-            title: 'Eventos pasados',
+            title: 'Escanear pago',
             badgeText: 'Nuevo',
-            icon: Icons.history,
+            icon: Icons.camera_alt,
+            onTap: onScanPaymentTap,
           ),
         ),
-        SizedBox(width: 14),
-        Expanded(
+        const SizedBox(width: 14),
+        const Expanded(
           child: _ProfileActionCard(
             title: 'Conexiones',
             badgeText: 'Nuevo',
@@ -341,15 +396,17 @@ class _ProfileActionCard extends StatelessWidget {
     required this.title,
     required this.badgeText,
     required this.icon,
+    this.onTap,
   });
 
   final String title;
   final String badgeText;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: ProfileScreen._surface,
@@ -403,6 +460,19 @@ class _ProfileActionCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: card,
       ),
     );
   }

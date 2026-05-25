@@ -93,8 +93,8 @@ class _DiscoverCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFfcd116).withValues(alpha: 0.8),
-                  Color(0xFFDB6B2F).withValues(alpha: 1),
+                    const Color(0xFFFCD116).withValues(alpha: 0.88),
+                    const Color(0xFF078930).withValues(alpha: 1),
                 ],
               ),
               boxShadow: [
@@ -444,7 +444,7 @@ class _CategoryEventCard extends StatelessWidget {
             color: themeData.cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Color(0xFF6C63FF).withValues(alpha: 0.2),
+              color: const Color(0xFF078930).withValues(alpha: 0.18),
               width: 1,
             ),
             boxShadow: [
@@ -498,7 +498,7 @@ class _CategoryEventCard extends StatelessWidget {
                           Text(
                             event.categoryLabel,
                             style: TextStyle(
-                              color: Color(0xFF6C63FF),
+                              color: const Color(0xFF078930),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -509,7 +509,7 @@ class _CategoryEventCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.calendar_today,
-                            color: Color(0xFF6C63FF),
+                            color: const Color(0xFF078930),
                             size: 14,
                           ),
                           const SizedBox(width: 6),
@@ -526,7 +526,7 @@ class _CategoryEventCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.location_on,
-                            color: Color(0xFFDB6B2F),
+                            color: const Color(0xFF078930),
                             size: 14,
                           ),
                           const SizedBox(width: 6),

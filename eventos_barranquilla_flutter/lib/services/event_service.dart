@@ -4,16 +4,21 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../models/event.dart';
+import '../models/event_attendee.dart';
+import '../models/event_review.dart';
+import '../models/user_review_entry.dart';
 import '../models/user.dart';
 import '../data/event_categories.dart';
 import 'api_client.dart';
 import 'api_config.dart';
+import 'user_service.dart';
 
 class EventService {
   EventService({ApiClient? client})
       : _client = client ?? ApiClient(ApiConfig.eventBaseUrl);
 
   final ApiClient _client;
+  final UserService _userService = UserService();
 
   Future<List<Event>> fetchPopularEvents() async {
     final data = await _client.getJson('/events/popular');
@@ -413,11 +418,129 @@ class EventService {
     await _client.deleteJson('/events/$eventId/attend?user_id=$userId');
   }
 
-  Future<List<dynamic>> fetchAttendees(String eventId) async {
+  Future<List<EventAttendee>> fetchAttendees(String eventId) async {
     final data = await _client.getJson('/events/$eventId/attendees');
     if (data is List) {
-      return data;
+      final attendees = <EventAttendee>[];
+      for (final item in data) {
+        if (item is Map<String, dynamic>) {
+          attendees.add(EventAttendee.fromJson(item));
+          continue;
+        }
+
+        final attendeeId = item?.toString().trim() ?? '';
+        if (attendeeId.isEmpty) {
+          continue;
+        }
+
+        try {
+          final user = await _userService.fetchUser(attendeeId);
+          attendees.add(EventAttendee.fromUser(user));
+        } catch (_) {
+          attendees.add(
+            EventAttendee(
+              id: attendeeId,
+              name: attendeeId,
+              email: '',
+              role: '',
+            ),
+          );
+        }
+      }
+      return attendees;
     }
     return [];
+  }
+
+  Future<List<EventReview>> fetchEventReviews(String eventId) async {
+    final data = await _client.getJson('/events/$eventId/reviews');
+    final rawList = data is List
+        ? data
+        : data is Map<String, dynamic> && data['reviews'] is List
+            ? data['reviews'] as List
+            : const [];
+
+    return rawList
+        .whereType<Map<String, dynamic>>()
+        .map(EventReview.fromJson)
+        .toList();
+  }
+
+  Future<EventReview> addEventReview({
+    required String eventId,
+    required String userId,
+    required String reviewText,
+    required int star,
+    String? token,
+  }) async {
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
+    final data = await _client.postJson(
+      '/events/$eventId/reviews',
+      headers: headers,
+      body: {
+        'user_id': userId,
+        'review_text': reviewText,
+        'star': star,
+      },
+    );
+    if (data is Map<String, dynamic>) {
+      return EventReview.fromJson(data);
+    }
+    throw ApiException(500, 'Invalid review response');
+  }
+
+  Future<EventReview> updateEventReview({
+    required String eventId,
+    required String userId,
+    required String reviewText,
+    required int star,
+    String? token,
+  }) async {
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
+    final data = await _client.patchJson(
+      '/events/$eventId/reviews/$userId',
+      headers: headers,
+      body: {
+        'review_text': reviewText,
+        'star': star,
+      },
+    );
+    if (data is Map<String, dynamic>) {
+      return EventReview.fromJson(data);
+    }
+    throw ApiException(500, 'Invalid review response');
+  }
+
+  Future<void> deleteEventReview({
+    required String eventId,
+    required String userId,
+    String? token,
+  }) async {
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
+    await _client.deleteJson('/events/$eventId/reviews/$userId', headers: headers);
+  }
+
+  Future<List<UserReviewEntry>> fetchReviewsGivenByUser(String userId) async {
+    final events = await fetchAllEvents();
+    final results = await Future.wait(
+      events.map((event) async {
+        final reviews = await fetchEventReviews(event.id);
+        final myReview = reviews.where((review) => review.userId == userId).toList();
+        if (myReview.isEmpty) {
+          return <UserReviewEntry>[];
+        }
+        return myReview
+            .map((review) => UserReviewEntry(event: event, review: review))
+            .toList();
+      }),
+    );
+
+    return results.expand((entries) => entries).toList();
   }
 }

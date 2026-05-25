@@ -97,7 +97,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
 
-    final profileUrl = user?.profilePicture ?? '';
+    final String profileUrl = user?.profilePicture?.trim() ?? '';
     final hasExistingProfileImage = profileUrl.isNotEmpty;
     final ImageProvider? avatarImage = _pickedImagePath != null
         ? FileImage(File(_pickedImagePath!))

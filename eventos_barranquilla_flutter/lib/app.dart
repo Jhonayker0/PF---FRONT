@@ -14,15 +14,22 @@ import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/edit_profile_screen.dart';
+import 'screens/event_reviews_screen.dart';
+import 'screens/my_reviews_screen.dart';
+import 'screens/smart_id_usuario.dart';
+import 'screens/scan_payment_screen.dart';
 
 class EventosBarranquillaApp extends StatelessWidget {
   const EventosBarranquillaApp({super.key});
 
-  static const Color _background = Color(0xFFF6F1E8);
+  static const Color _green = Color(0xFF078930);
+  static const Color _yellow = Color(0xFFFCD116);
+  static const Color _red = Color(0xFFCE1126);
+  static const Color _background = Color(0xFFF9F5EA);
   static const Color _surface = Color(0xFFFFFFFF);
   static const Color _ink = Color(0xFF181818);
   static const Color _muted = Color(0xFF6B645C);
-  static const Color _accent = Color(0xFFDB6B2F);
+  static const Color _accent = _green;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +39,8 @@ class EventosBarranquillaApp extends StatelessWidget {
       surface: _surface,
     ).copyWith(
       primary: _accent,
-      secondary: _ink,
+      secondary: _red,
+      tertiary: _yellow,
       surface: _surface,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
@@ -87,7 +95,7 @@ class EventosBarranquillaApp extends StatelessWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Color(0xFFE7DFD4)),
+              side: const BorderSide(color: Color(0xFFE1DCCF)),
           ),
         ),
       ),
@@ -147,6 +155,10 @@ class EventosBarranquillaApp extends StatelessWidget {
               path: '/profile/edit',
               builder: (context, state) => const EditProfileScreen(),
             ),
+            GoRoute(
+              path: '/my-reviews',
+              builder: (context, state) => const MyReviewsScreen(),
+            ),
           ],
         ),
         GoRoute(
@@ -167,6 +179,22 @@ class EventosBarranquillaApp extends StatelessWidget {
         GoRoute(
           path: '/create-event',
           builder: (context, state) => const CreateEventScreen(),
+        ),
+        GoRoute(
+          path: '/smart-id-usuario',
+          builder: (context, state) => const SmartIdUsuarioScreen(),
+        ),
+        GoRoute(
+          path: '/event-reviews',
+          builder: (context, state) {
+            final extra = state.extra;
+            final event = extra as Event;
+            return EventReviewsScreen(event: event);
+          },
+        ),
+        GoRoute(
+          path: '/scan-payment',
+          builder: (context, state) => const ScanPaymentScreen(),
         ),
       ],
     );
@@ -203,7 +231,7 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
       floatingActionButton: showCreateButton
           ? FloatingActionButton(
               onPressed: () => context.go('/create-event'),
-              backgroundColor: const Color(0xFFCE1126),
+              backgroundColor: EventosBarranquillaApp._green,
               foregroundColor: Colors.white,
               elevation: 6,
               child: const Icon(Icons.add, size: 30),
@@ -214,7 +242,7 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         currentIndex: currentIndex,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFFCE1126),
+        selectedItemColor: EventosBarranquillaApp._green,
         unselectedItemColor: const Color(0xFF8A847D),
         selectedLabelStyle: const TextStyle(
           fontSize: 12,

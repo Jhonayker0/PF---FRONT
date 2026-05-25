@@ -216,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onSelected: authProvider.isLoading
                                 ? null
                                 : (_) => setState(() => _role = 'client'),
-                            selectedColor: const Color(0xFF6C63FF),
+                            selectedColor: const Color(0xFF078930),
                             backgroundColor: Colors.white,
                             labelStyle: TextStyle(
                               color: _role == 'client'
@@ -233,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onSelected: authProvider.isLoading
                                 ? null
                                 : (_) => setState(() => _role = 'admin'),
-                            selectedColor: const Color(0xFF6C63FF),
+                            selectedColor: const Color(0xFF078930),
                             backgroundColor: Colors.white,
                             labelStyle: TextStyle(
                               color: _role == 'admin'
@@ -260,7 +260,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFF6C63FF),
+                            Color(0xFF078930),
                           ),
                         ),
                       )
@@ -269,7 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6C63FF),
+                            backgroundColor: const Color(0xFF078930),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),

@@ -71,12 +71,12 @@ class CategoryBrowser extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFFCE1126).withValues(alpha: 0.1)
+                        ? const Color(0xFF078930).withValues(alpha: 0.1)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFFCE1126)
+                          ? const Color(0xFF078930)
                           : const Color(0xFFE7DFD4),
                       width: isSelected ? 1.3 : 1,
                     ),
@@ -96,7 +96,7 @@ class CategoryBrowser extends StatelessWidget {
                         height: 42,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFFCE1126)
+                              ? const Color(0xFF078930)
                               : const Color(0xFFF5EFE7),
                           shape: BoxShape.circle,
                         ),
@@ -104,7 +104,7 @@ class CategoryBrowser extends StatelessWidget {
                           _iconFor(generalCategory),
                           color: isSelected
                               ? Colors.white
-                              : const Color(0xFFCE1126),
+                              : const Color(0xFF078930),
                           size: 22,
                         ),
                       ),
@@ -119,7 +119,7 @@ class CategoryBrowser extends StatelessWidget {
                           height: 1.1,
                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                           color: isSelected
-                              ? const Color(0xFFCE1126)
+                              ? const Color(0xFF078930)
                               : const Color(0xFF3E352E),
                         ),
                       ),
@@ -156,7 +156,7 @@ class CategoryBrowser extends StatelessWidget {
                   selected: selectedSpecific == null,
                   onSelected: (_) => onSpecificSelected(null),
                   backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFFCE1126),
+                  selectedColor: const Color(0xFF078930),
                   labelStyle: TextStyle(
                     color: selectedSpecific == null ? Colors.white : const Color(0xFF3E352E),
                     fontWeight: FontWeight.w600,
@@ -165,7 +165,7 @@ class CategoryBrowser extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     side: BorderSide(
                       color: selectedSpecific == null
-                          ? const Color(0xFFCE1126)
+                          ? const Color(0xFF078930)
                           : const Color(0xFFE7DFD4),
                     ),
                   ),
@@ -177,7 +177,7 @@ class CategoryBrowser extends StatelessWidget {
                     selected: isSelected,
                     onSelected: (_) => onSpecificSelected(specificCategory),
                     backgroundColor: Colors.white,
-                    selectedColor: const Color(0xFFCE1126),
+                    selectedColor: const Color(0xFF078930),
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : const Color(0xFF3E352E),
                       fontWeight: FontWeight.w600,
@@ -186,7 +186,7 @@ class CategoryBrowser extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                       side: BorderSide(
                         color: isSelected
-                            ? const Color(0xFFCE1126)
+                          ? const Color(0xFF078930)
                             : const Color(0xFFE7DFD4),
                       ),
                     ),

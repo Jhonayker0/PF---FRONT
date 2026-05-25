@@ -255,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: FilledButton(
                                   style: FilledButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(vertical: 14),
-                                    backgroundColor: const Color(0xFFCE1126),
+                                    backgroundColor: const Color(0xFF078930),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(18),
                                     ),
@@ -417,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(18),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFCE1126),
+                                    color: Color(0xFF078930),
                                     width: 1.2,
                                   ),
                                 ),
@@ -491,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ElevatedButton(
                               onPressed: _loadEvents,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFCE1126),
+                                backgroundColor: const Color(0xFF078930),
                               ),
                               child: const Text('Reintentar'),
                             ),
@@ -628,7 +628,7 @@ class _PromptFeatureRow extends StatelessWidget {
             color: const Color(0xFFF5EFE7),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: const Color(0xFFCE1126)),
+          child: Icon(icon, color: const Color(0xFF078930)),
         ),
         const SizedBox(width: 14),
         Expanded(

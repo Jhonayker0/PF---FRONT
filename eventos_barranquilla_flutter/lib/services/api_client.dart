@@ -44,6 +44,14 @@ class ApiClient {
     return _sendJson('PUT', path, headers: headers, body: body);
   }
 
+  Future<dynamic> patchJson(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+  }) {
+    return _sendJson('PATCH', path, headers: headers, body: body);
+  }
+
   Future<dynamic> deleteJson(String path, {Map<String, String>? headers}) {
     return _sendJson('DELETE', path, headers: headers);
   }
