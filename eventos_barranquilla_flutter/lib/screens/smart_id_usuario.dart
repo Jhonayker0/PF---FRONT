@@ -90,6 +90,29 @@ class _SmartIdUsuarioScreenState extends State<SmartIdUsuarioScreen>
     }
   }
 
+  Widget _buildCumbeLogo({required double width, required Color fallbackColor}) {
+    return Image.asset(
+      'assets/CumbeLogoBlanco.png',
+      width: width,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) {
+        return Image.asset(
+          'assets/CumbeLogoR.png',
+          width: width,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Text(
+            'Cumbé',
+            style: TextStyle(
+              color: fallbackColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   String _formatDateTime(DateTime value) {
     const dayNames = [
       'lunes',
@@ -209,11 +232,7 @@ class _SmartIdUsuarioScreenState extends State<SmartIdUsuarioScreen>
                   ),
                 ),
                 
-                Image.asset(
-                  'assets/CumbeLogoBlanco.png',
-                  width: 146,
-                  fit: BoxFit.contain,
-                ),
+                _buildCumbeLogo(width: 146, fallbackColor: Colors.white),
                 const Spacer(),
 
                 Row(

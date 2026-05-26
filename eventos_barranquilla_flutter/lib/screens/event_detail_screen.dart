@@ -33,7 +33,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _isTogglingRegister = false;
   final UserService _userService = UserService();
   User? _organizerUser;
-  bool _isLoadingOrganizer = false;
   bool _isLoadingReviews = false;
   String? _reviewsError;
   List<EventReview> _reviews = [];
@@ -280,10 +279,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       return;
     }
 
-    setState(() {
-      _isLoadingOrganizer = true;
-    });
-
     try {
       final organizer = await _userService.fetchUser(organizerId);
       if (!mounted) return;
@@ -292,12 +287,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       });
     } catch (_) {
       // keep fallback values
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingOrganizer = false;
-        });
-      }
     }
   }
 
@@ -348,6 +337,43 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ..clear()
         ..addAll(heights);
     });
+  }
+
+  Future<bool> _confirmRegistration() async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirmar inscripción'),
+          content: Text('¿Deseas inscribirte a "${widget.event.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF078930),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return accepted ?? false;
+  }
+
+  Future<void> _showRegistrationSuccessAnimation() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _RegistrationSuccessDialog(),
+    );
   }
 
   @override
@@ -641,14 +667,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       onPressed: isOrganizer
                           ? null
                           : () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         final user = authProvider.user;
                         if (user == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Inicia sesión para registrarte'),
                             ),
                           );
                           return;
+                        }
+
+                        if (!_isRegistered) {
+                          final accepted = await _confirmRegistration();
+                          if (!accepted || !mounted) {
+                            return;
+                          }
                         }
 
                         setState(() {
@@ -669,7 +703,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               final currentUser = authProvider.user;
                               currentUser?.attendedEvents.remove(widget.event.id);
                             } catch (_) {}
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Has dejado de estar registrado en el evento'),
                               ),
@@ -689,7 +723,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 currentUser.attendedEvents.add(widget.event.id);
                               }
                             } catch (_) {}
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            await _showRegistrationSuccessAnimation();
+                            if (!mounted) return;
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('¡Te has registrado en el evento!'),
                               ),
@@ -697,7 +733,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           }
                         } catch (e) {
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text('No se pudo cambiar el estado de registro: $e'),
                             ),
@@ -976,6 +1012,103 @@ class _InfoPill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RegistrationSuccessDialog extends StatefulWidget {
+  const _RegistrationSuccessDialog();
+
+  @override
+  State<_RegistrationSuccessDialog> createState() => _RegistrationSuccessDialogState();
+}
+
+class _RegistrationSuccessDialogState extends State<_RegistrationSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _controller.forward().whenComplete(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 420));
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final progress = _controller.value;
+            final checkOpacity = ((progress - 0.62) / 0.38).clamp(0.0, 1.0);
+            final checkScale = 0.7 + (0.3 * checkOpacity);
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 88,
+                      height: 88,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 8,
+                        value: progress,
+                        color: const Color(0xFF078930),
+                        backgroundColor: const Color(0xFFEAF6EC),
+                      ),
+                    ),
+                    Opacity(
+                      opacity: checkOpacity,
+                      child: Transform.scale(
+                        scale: checkScale,
+                        child: const Icon(
+                          Icons.check_circle,
+                          size: 58,
+                          color: Color(0xFF078930),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Inscripción confirmada',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1B1B1B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Tu cupo quedó guardado correctamente.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

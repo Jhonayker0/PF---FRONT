@@ -13,8 +13,8 @@ import '../services/api_client.dart';
 import '../models/payment.dart';
 import '../services/event_service.dart';
 import '../services/payment_service.dart';
+import 'confirmed_event_ticket_screen.dart';
 import 'edit_event_screen.dart';
-import 'event_detail_screen.dart';
 
 class MyEventsScreen extends StatefulWidget {
   const MyEventsScreen({super.key});
@@ -146,22 +146,20 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
             builder: (dialogContext, setStateDialog) {
               // start polling once dialog is built
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (poller == null) {
-                  poller = Timer.periodic(const Duration(seconds: 3), (t) async {
-                    try {
-                      final updated = await _paymentService.getPayment(payment.paymentId, token: organizerToken);
-                      if (updated.status != currentStatus) {
-                        currentStatus = updated.status;
-                        setStateDialog(() {});
-                        if (updated.status.toLowerCase() == 'confirmed' || updated.status.toLowerCase() == 'paid') {
-                          t.cancel();
-                        }
+                poller ??= Timer.periodic(const Duration(seconds: 3), (t) async {
+                  try {
+                    final updated = await _paymentService.getPayment(payment.paymentId, token: organizerToken);
+                    if (updated.status != currentStatus) {
+                      currentStatus = updated.status;
+                      setStateDialog(() {});
+                      if (updated.status.toLowerCase() == 'confirmed' || updated.status.toLowerCase() == 'paid') {
+                        t.cancel();
                       }
-                    } catch (_) {
-                      // ignore polling errors
                     }
-                  });
-                }
+                  } catch (_) {
+                    // ignore polling errors
+                  }
+                });
               });
 
               return AlertDialog(
@@ -642,7 +640,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                                 ? () => _showOrganizerActions(event)
                                 : () => Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => EventDetailScreen(event: event),
+                                        builder: (_) => ConfirmedEventTicketScreen(event: event),
                                       ),
                                     ),
                             child: Padding(
