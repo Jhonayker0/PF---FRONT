@@ -2,12 +2,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class FcmService {
-  Future<String?> obtenerFcmToken() async {
+  Future<String?> obtenerFcmToken() {
     return requestAndGetToken();
-  }
-
-  Stream<String> onTokenRefresh() {
-    return FirebaseMessaging.instance.onTokenRefresh;
   }
 
   Future<String?> requestAndGetToken() async {

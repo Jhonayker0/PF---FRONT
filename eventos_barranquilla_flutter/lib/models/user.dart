@@ -25,7 +25,9 @@ class User {
     return normalized == 'admin' ||
         normalized == 'administrator' ||
         normalized == 'organizer' ||
-        normalized == 'organizador';
+      normalized == 'organizador' ||
+      // TODO: remove this temporary fallback when the backend returns role/is_admin consistently.
+      email.trim().toLowerCase() == 'admin@example.com';
   }
 
   factory User.fromJson(Map<String, dynamic> json) {

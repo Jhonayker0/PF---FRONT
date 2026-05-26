@@ -295,7 +295,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF6C63FF)),
+                      const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF078930)),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -361,9 +361,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       onPressed: () => _pickImages(ImageSource.gallery),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF6C63FF),
+                        foregroundColor: const Color(0xFF078930),
                         elevation: 0,
-                        side: const BorderSide(color: Color(0xFFDDD6FF)),
+                        side: const BorderSide(color: Color(0xFFBFDCC7)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       icon: const Icon(Icons.photo_library_outlined),
@@ -375,7 +375,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => _pickImages(ImageSource.camera),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C63FF),
+                        backgroundColor: const Color(0xFF078930),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
@@ -494,7 +494,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
+                    backgroundColor: const Color(0xFF078930),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: _isSubmitting

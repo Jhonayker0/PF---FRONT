@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../models/profile_stats.dart';
+import '../services/event_service.dart';
 import '../services/fcm_service.dart';
 import '../services/user_service.dart';
 
@@ -11,9 +12,10 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _token;
+  int _reviewCount = 0;
   final UserService _userService = UserService();
   final FcmService _fcmService = FcmService();
-  StreamSubscription<String>? _fcmTokenSubscription;
+  final EventService _eventService = EventService();
 
   User? get user => _user;
   bool get isLoading => _isLoading;
@@ -24,7 +26,7 @@ class AuthProvider extends ChangeNotifier {
 
   ProfileStats get profileStats {
     final eventsCount = _user?.attendedEvents.length ?? 0;
-    return ProfileStats(events: eventsCount, reviews: 0, monthsOnCumbe: 0);
+    return ProfileStats(events: eventsCount, reviews: _reviewCount, monthsOnCumbe: 0);
   }
 
   Future<bool> signIn(String email, String password) async {
@@ -39,7 +41,7 @@ class AuthProvider extends ChangeNotifier {
       _token = token;
       _user = fetchedUser;
       await _syncFcmToken(fetchedUser.id);
-      _startFcmTokenListener(fetchedUser.id);
+      await _refreshReviewCount(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -52,7 +54,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> signUp(String email, String password, String name, String role) async {
+  Future<bool> signUp(String email, String password, String name, String role, {String? profileImagePath}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -64,7 +66,25 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
       final userId = await _userService.verifyToken(token);
-      final fetchedUser = await _userService.fetchUser(userId);
+      var fetchedUser = await _userService.fetchUser(userId);
+      // If the user supplied a profile image during registration, upload it
+      // and update the user record with the returned URL.
+      if (profileImagePath != null && profileImagePath.isNotEmpty) {
+        try {
+          final uploadedUrl = await _userService.uploadProfilePicture(
+            userId: userId,
+            filePath: profileImagePath,
+            token: token,
+          );
+          // Merge with the fetched user's full JSON to satisfy backend required fields
+          final merged = fetchedUser.toJson();
+          merged['profile_picture_url'] = uploadedUrl;
+          await _userService.updateUser(userId: userId, body: merged, token: token);
+          fetchedUser = await _userService.fetchUser(userId);
+        } catch (_) {
+          // ignore upload errors during signup; continue with fetchedUser
+        }
+      }
       _token = token;
       _user = User(
         id: fetchedUser.id,
@@ -76,13 +96,78 @@ class AuthProvider extends ChangeNotifier {
         attendedEvents: fetchedUser.attendedEvents,
       );
       await _syncFcmToken(fetchedUser.id);
-      _startFcmTokenListener(fetchedUser.id);
+      await _refreshReviewCount(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Error al registrarse: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateProfile({String? name, String? profileImagePath}) async {
+    final currentUser = _user;
+    if (currentUser == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      String? uploadedUrl;
+      if (profileImagePath != null && profileImagePath.isNotEmpty) {
+        uploadedUrl = await _userService.uploadProfilePicture(
+          userId: currentUser.id,
+          filePath: profileImagePath,
+          token: _token,
+        );
+      }
+
+      final updates = <String, dynamic>{};
+      if (name != null && name.isNotEmpty) updates['name'] = name;
+      if (uploadedUrl != null && uploadedUrl.isNotEmpty) updates['profile_picture_url'] = uploadedUrl;
+      if (updates.isNotEmpty) {
+        final full = currentUser.toJson();
+        full.addAll(updates);
+        await _userService.updateUser(userId: currentUser.id, body: full, token: _token);
+      }
+
+      final refreshed = await _userService.fetchUser(currentUser.id);
+      _user = refreshed;
+      await _refreshReviewCount(refreshed.id);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'No se pudo actualizar perfil: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteProfilePicture() async {
+    final currentUser = _user;
+    if (currentUser == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _userService.deleteProfilePicture(
+        userId: currentUser.id,
+        token: _token,
+      );
+      final refreshed = await _userService.fetchUser(currentUser.id);
+      _user = refreshed;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'No se pudo eliminar la foto de perfil: $e';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -102,8 +187,14 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _errorMessage = null;
     _token = null;
-    await _fcmTokenSubscription?.cancel();
-    _fcmTokenSubscription = null;
+    _reviewCount = 0;
+    notifyListeners();
+  }
+
+  Future<void> refreshProfileStats() async {
+    final currentUser = _user;
+    if (currentUser == null) return;
+    await _refreshReviewCount(currentUser.id);
     notifyListeners();
   }
 
@@ -157,23 +248,12 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void _startFcmTokenListener(String userId) {
-    _fcmTokenSubscription?.cancel();
-    _fcmTokenSubscription = _fcmService.onTokenRefresh().listen((token) async {
-      if (token.isEmpty) {
-        return;
-      }
-      try {
-        await _userService.updateFcmToken(userId: userId, fcmToken: token);
-      } catch (_) {
-        // Ignore token refresh sync errors for now.
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _fcmTokenSubscription?.cancel();
-    super.dispose();
+  Future<void> _refreshReviewCount(String userId) async {
+    try {
+      final reviews = await _eventService.fetchReviewsGivenByUser(userId);
+      _reviewCount = reviews.length;
+    } catch (_) {
+      _reviewCount = 0;
+    }
   }
 }
