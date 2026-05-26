@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +10,7 @@ import '../models/event.dart';
 import '../models/event_attendee.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
+import '../models/payment.dart';
 import '../services/event_service.dart';
 import '../services/payment_service.dart';
 import 'edit_event_screen.dart';
@@ -134,44 +136,74 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
         return;
       }
 
+      String currentStatus = payment.status;
+      Timer? poller;
+
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('QR de pago generado'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(event.title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text('Asistente: ${attendee.displayName}'),
-                  const SizedBox(height: 14),
-                  Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.memory(
-                        _decodeQrImage(payment.qrCodeBase64),
-                        width: 220,
-                        height: 220,
-                        fit: BoxFit.cover,
+          return StatefulBuilder(
+            builder: (dialogContext, setStateDialog) {
+              // start polling once dialog is built
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (poller == null) {
+                  poller = Timer.periodic(const Duration(seconds: 3), (t) async {
+                    try {
+                      final updated = await _paymentService.getPayment(payment.paymentId, token: organizerToken);
+                      if (updated.status != currentStatus) {
+                        currentStatus = updated.status;
+                        setStateDialog(() {});
+                        if (updated.status.toLowerCase() == 'confirmed' || updated.status.toLowerCase() == 'paid') {
+                          t.cancel();
+                        }
+                      }
+                    } catch (_) {
+                      // ignore polling errors
+                    }
+                  });
+                }
+              });
+
+              return AlertDialog(
+                title: const Text('QR de pago generado'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(event.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text('Asistente: ${attendee.displayName}'),
+                      const SizedBox(height: 14),
+                      Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.memory(
+                            _decodeQrImage(payment.qrCodeBase64),
+                            width: 220,
+                            height: 220,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 14),
+                      Text('Estado: $currentStatus'),
+                      const SizedBox(height: 4),
+                      SelectableText(payment.qrToken),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  Text('Estado: ${payment.status}'),
-                  const SizedBox(height: 4),
-                  SelectableText(payment.qrToken),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      poller?.cancel();
+                      Navigator.pop(dialogContext);
+                    },
+                    child: const Text('Cerrar'),
+                  ),
                 ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cerrar'),
-              ),
-            ],
+              );
+            },
           );
         },
       );
@@ -231,12 +263,18 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
   Future<void> _showPaymentVerification(Event event) async {
     final messenger = ScaffoldMessenger.of(context);
     final user = context.read<AuthProvider>().user;
+    final organizerToken = context.read<AuthProvider>().token;
     if (user == null || !user.isAdmin) {
       return;
     }
 
     try {
       final attendees = await _eventService.fetchAttendees(event.id);
+      // Fetch payments for this event and map by user_id for quick lookup
+      final eventPayments = await _paymentService.getEventPayments(event.id, token: organizerToken);
+      final Map<String, PaymentResponse> paymentsByUser = {
+        for (final p in eventPayments) p.userId: p
+      };
       if (!mounted) {
         return;
       }
@@ -313,6 +351,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, index) {
                             final attendee = attendees[index];
+                            final payment = paymentsByUser[attendee.id];
                             return Material(
                               color: const Color(0xFFF8F3EA),
                               borderRadius: BorderRadius.circular(18),
@@ -320,6 +359,15 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                                 borderRadius: BorderRadius.circular(18),
                                 onTap: () async {
                                   Navigator.pop(sheetContext);
+                                  // If already paid, show details instead of generating new QR
+                                  if (payment != null &&
+                                      (payment.status.toLowerCase() == 'confirmed' || payment.status.toLowerCase() == 'paid')) {
+                                    messenger.showSnackBar(
+                                      SnackBar(content: Text('Pago ya validado: ${payment.id}')),
+                                    );
+                                    return;
+                                  }
+
                                   await _showPaymentQrDialog(event, attendee);
                                 },
                                 child: Padding(
@@ -650,24 +698,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 10),
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFEAF6EC),
-                                              borderRadius: BorderRadius.circular(999),
-                                            ),
-                                            child: Text(
-                                              isAdmin ? 'Creado por ti' : 'Asistencia confirmada',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFF078930),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
+                                        const SizedBox.shrink(),
                                       ],
                                     ),
                                   ),

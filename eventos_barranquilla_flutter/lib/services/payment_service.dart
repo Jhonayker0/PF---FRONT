@@ -63,8 +63,9 @@ class PaymentService {
     throw ApiException(500, 'Invalid payment validation response');
   }
 
-  Future<PaymentResponse> getPayment(String paymentId) async {
-    final data = await _client.getJson('/payments/$paymentId');
+  Future<PaymentResponse> getPayment(String paymentId, {String? token}) async {
+    final headers = token != null && token.isNotEmpty ? {'Authorization': 'Bearer $token'} : null;
+    final data = await _client.getJson('/payments/$paymentId', headers: headers);
     if (data is Map<String, dynamic>) {
       return PaymentResponse.fromJson(data);
     }
@@ -82,8 +83,9 @@ class PaymentService {
     return [];
   }
 
-  Future<List<PaymentResponse>> getEventPayments(String eventId) async {
-    final data = await _client.getJson('/payments/event/$eventId');
+  Future<List<PaymentResponse>> getEventPayments(String eventId, {String? token}) async {
+    final headers = token != null && token.isNotEmpty ? {'Authorization': 'Bearer $token'} : null;
+    final data = await _client.getJson('/payments/event/$eventId', headers: headers);
     if (data is List) {
       return data
           .whereType<Map<String, dynamic>>()

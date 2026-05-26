@@ -207,9 +207,15 @@ class _EventReviewsScreenState extends State<EventReviewsScreen> {
                             onPressed: _isSubmitting
                                 ? null
                                 : () async {
+                                    final navigator = Navigator.of(sheetContext);
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final authProvider = context.read<AuthProvider>();
+                                    final currentUserId = currentUser.id;
+                                    final authToken = auth.token;
+
                                     final reviewText = _reviewController.text.trim();
                                     if (reviewText.isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      messenger.showSnackBar(
                                         const SnackBar(content: Text('Escribe tu reseña')),
                                       );
                                       return;
@@ -223,25 +229,26 @@ class _EventReviewsScreenState extends State<EventReviewsScreen> {
                                       if (existingReview == null) {
                                         await _eventService.addEventReview(
                                           eventId: widget.event.id,
-                                          userId: currentUser.id,
+                                          userId: currentUserId,
                                           reviewText: reviewText,
                                           star: _selectedStar,
-                                          token: auth.token,
+                                          token: authToken,
                                         );
                                       } else {
                                         await _eventService.updateEventReview(
                                           eventId: widget.event.id,
-                                          userId: currentUser.id,
+                                          userId: currentUserId,
                                           reviewText: reviewText,
                                           star: _selectedStar,
-                                          token: auth.token,
+                                          token: authToken,
                                         );
                                       }
                                       if (!mounted) return;
-                                      Navigator.of(sheetContext).pop(true);
+                                      await authProvider.refreshProfileStats();
+                                      navigator.pop(true);
                                     } catch (e) {
                                       if (!mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      messenger.showSnackBar(
                                         SnackBar(content: Text('No se pudo guardar la reseña: $e')),
                                       );
                                     } finally {
@@ -271,6 +278,12 @@ class _EventReviewsScreenState extends State<EventReviewsScreen> {
                               onPressed: _isSubmitting
                                   ? null
                                   : () async {
+                                      final navigator = Navigator.of(sheetContext);
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      final authProvider = context.read<AuthProvider>();
+                                      final currentUserId = currentUser.id;
+                                      final authToken = auth.token;
+
                                       final confirmed = await showDialog<bool>(
                                         context: context,
                                         builder: (dialogContext) => AlertDialog(
@@ -295,14 +308,15 @@ class _EventReviewsScreenState extends State<EventReviewsScreen> {
                                       try {
                                         await _eventService.deleteEventReview(
                                           eventId: widget.event.id,
-                                          userId: currentUser.id,
-                                          token: auth.token,
+                                          userId: currentUserId,
+                                          token: authToken,
                                         );
                                         if (!mounted) return;
-                                        Navigator.of(sheetContext).pop(true);
+                                        await authProvider.refreshProfileStats();
+                                        navigator.pop(true);
                                       } catch (e) {
                                         if (!mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        messenger.showSnackBar(
                                           SnackBar(content: Text('No se pudo eliminar la reseña: $e')),
                                         );
                                       } finally {
@@ -365,6 +379,7 @@ class _EventReviewsScreenState extends State<EventReviewsScreen> {
         token: auth.token,
       );
       if (!mounted) return;
+      await context.read<AuthProvider>().refreshProfileStats();
       await _loadReviews();
     } catch (e) {
       if (!mounted) return;

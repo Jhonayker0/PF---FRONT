@@ -22,13 +22,57 @@ class _ScanPaymentScreenState extends State<ScanPaymentScreen> {
   ValidateQrResponse? _lastResult;
   String? _errorMessage;
 
+  Map<String, dynamic>? _decodeQrClaims(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length < 2) {
+        return null;
+      }
+
+      final normalized = base64Url.normalize(parts[1]);
+      final payload = utf8.decode(base64Url.decode(normalized));
+      final decoded = jsonDecode(payload);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _handleToken(String token) async {
     if (_isProcessing) {
       return;
     }
 
     final messenger = ScaffoldMessenger.of(context);
-    final authToken = context.read<AuthProvider>().token;
+    final auth = context.read<AuthProvider>();
+    final authToken = auth.token;
+    final currentUser = auth.user;
+
+    if (currentUser == null || authToken == null || authToken.isEmpty) {
+      setState(() {
+        _errorMessage = 'Debes iniciar sesión para validar el pago.';
+      });
+      messenger.showSnackBar(
+        SnackBar(content: Text(_errorMessage!)),
+      );
+      return;
+    }
+
+    final claims = _decodeQrClaims(token);
+    final qrUserId = claims?['user_id']?.toString();
+
+    if (qrUserId != null && qrUserId.isNotEmpty && qrUserId != currentUser.id) {
+      setState(() {
+        _errorMessage = 'Este QR pertenece a otra cuenta. Inicia sesión con el usuario correcto.';
+      });
+      messenger.showSnackBar(
+        SnackBar(content: Text(_errorMessage!)),
+      );
+      return;
+    }
 
     setState(() {
       _isProcessing = true;

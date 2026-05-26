@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../models/profile_stats.dart';
+import '../services/event_service.dart';
 import '../services/fcm_service.dart';
 import '../services/user_service.dart';
 
@@ -9,8 +10,10 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _token;
+  int _reviewCount = 0;
   final UserService _userService = UserService();
   final FcmService _fcmService = FcmService();
+  final EventService _eventService = EventService();
 
   User? get user => _user;
   bool get isLoading => _isLoading;
@@ -21,7 +24,7 @@ class AuthProvider extends ChangeNotifier {
 
   ProfileStats get profileStats {
     final eventsCount = _user?.attendedEvents.length ?? 0;
-    return ProfileStats(events: eventsCount, reviews: 0, monthsOnCumbe: 0);
+    return ProfileStats(events: eventsCount, reviews: _reviewCount, monthsOnCumbe: 0);
   }
 
   Future<bool> signIn(String email, String password) async {
@@ -36,6 +39,7 @@ class AuthProvider extends ChangeNotifier {
       _token = token;
       _user = fetchedUser;
       await _syncFcmToken(fetchedUser.id);
+      await _refreshReviewCount(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -90,6 +94,7 @@ class AuthProvider extends ChangeNotifier {
         attendedEvents: fetchedUser.attendedEvents,
       );
       await _syncFcmToken(fetchedUser.id);
+      await _refreshReviewCount(fetchedUser.id);
 
       _isLoading = false;
       notifyListeners();
@@ -130,6 +135,7 @@ class AuthProvider extends ChangeNotifier {
 
       final refreshed = await _userService.fetchUser(currentUser.id);
       _user = refreshed;
+      await _refreshReviewCount(refreshed.id);
       _isLoading = false;
       notifyListeners();
       return true;
@@ -179,6 +185,14 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _errorMessage = null;
     _token = null;
+    _reviewCount = 0;
+    notifyListeners();
+  }
+
+  Future<void> refreshProfileStats() async {
+    final currentUser = _user;
+    if (currentUser == null) return;
+    await _refreshReviewCount(currentUser.id);
     notifyListeners();
   }
 
@@ -229,6 +243,15 @@ class AuthProvider extends ChangeNotifier {
       await _userService.updateFcmToken(userId: userId, fcmToken: token);
     } catch (_) {
       // Ignore token sync errors for now.
+    }
+  }
+
+  Future<void> _refreshReviewCount(String userId) async {
+    try {
+      final reviews = await _eventService.fetchReviewsGivenByUser(userId);
+      _reviewCount = reviews.length;
+    } catch (_) {
+      _reviewCount = 0;
     }
   }
 }
