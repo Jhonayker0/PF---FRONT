@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/user_service.dart';
 
 class AddFriendScreen extends StatefulWidget {
   const AddFriendScreen({super.key});
@@ -11,6 +14,8 @@ class AddFriendScreen extends StatefulWidget {
 class _AddFriendScreenState extends State<AddFriendScreen> {
   late final TextEditingController _usernameController;
   bool _isSearching = false;
+  final UserService _userService = UserService();
+  final RegExp _userIdPattern = RegExp(r'^[0-9a-fA-F]{24}$');
 
   @override
   void initState() {
@@ -33,25 +38,54 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       return;
     }
 
-    setState(() => _isSearching = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (!mounted) {
+    final currentUser = context.read<AuthProvider>().user;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inicia sesion para agregar amigos.')),
+      );
       return;
     }
 
-    setState(() => _isSearching = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Busqueda enviada.')),
-    );
+    setState(() => _isSearching = true);
+    try {
+      if (_userIdPattern.hasMatch(username)) {
+        await _userService.followUser(
+          userId: currentUser.id,
+          targetUserId: username,
+        );
+        if (!mounted) {
+          return;
+        }
+        _usernameController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Amigo agregado correctamente.')),
+        );
+      } else {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Busqueda por nombre estara disponible pronto.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo agregar: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
   }
 
-  void _scanQrPlaceholder() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Escaneo QR pendiente de integrar.'),
-      ),
-    );
+  void _scanQr() {
+    context.push('/add-friend/scan');
   }
 
   @override
@@ -121,7 +155,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _scanQrPlaceholder,
+                onPressed: _scanQr,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1F1A17),
                   padding: const EdgeInsets.symmetric(vertical: 14),

@@ -96,6 +96,13 @@ class UserService {
     );
   }
 
+  Future<void> followUser({
+    required String userId,
+    required String targetUserId,
+  }) async {
+    await _client.postJson('/users/$userId/follow/$targetUserId');
+  }
+
   Future<String> uploadProfilePicture({
     required String userId,
     required String filePath,
