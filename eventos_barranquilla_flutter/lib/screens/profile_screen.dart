@@ -119,9 +119,10 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.privacy_tip_outlined,
                 ),
                 const SizedBox(height: 10),
-                const _ProfileListItem(
+                _ProfileListItem(
                   text: 'Referir organizador',
                   icon: Icons.group_outlined,
+                  onTap: () => context.push('/refer-organizer'),
                 ),
                 const _ProfileListItem(
                   text: 'Encuentra coanfitrion',
