@@ -54,6 +54,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _ProfileQuickActions(
                     onScanPaymentTap: () => context.push('/scan-payment'),
+                    onConnectionsTap: () => context.push('/connections'),
                   ),
                   const SizedBox(height: 16),
                   if (isAdminUser) const _ProfilePromoCard(),
@@ -364,9 +365,13 @@ class _ProfileStat extends StatelessWidget {
 }
 
 class _ProfileQuickActions extends StatelessWidget {
-  const _ProfileQuickActions({required this.onScanPaymentTap});
+  const _ProfileQuickActions({
+    required this.onScanPaymentTap,
+    required this.onConnectionsTap,
+  });
 
   final VoidCallback onScanPaymentTap;
+  final VoidCallback onConnectionsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -381,11 +386,12 @@ class _ProfileQuickActions extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: _ProfileActionCard(
             title: 'Conexiones',
             badgeText: 'Nuevo',
             icon: Icons.group_outlined,
+            onTap: onConnectionsTap,
           ),
         ),
       ],

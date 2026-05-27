@@ -103,6 +103,32 @@ class UserService {
     await _client.postJson('/users/$userId/follow/$targetUserId');
   }
 
+  Future<List<User>> searchUsersByName(String query) async {
+    final encoded = Uri.encodeComponent(query);
+    final data = await _client.getJson('/users/search?query=$encoded');
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(User.fromJson)
+          .toList();
+    }
+    return [];
+  }
+
+  Future<List<User>> getUsersBatch(List<String> ids) async {
+    if (ids.isEmpty) {
+      return [];
+    }
+    final data = await _client.postJson('/users/batch', body: {'ids': ids});
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(User.fromJson)
+          .toList();
+    }
+    return [];
+  }
+
   Future<String> uploadProfilePicture({
     required String userId,
     required String filePath,

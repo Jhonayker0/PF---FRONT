@@ -22,6 +22,7 @@ import 'screens/support_screen.dart';
 import 'screens/refer_organizer_screen.dart';
 import 'screens/add_friend_screen.dart';
 import 'screens/add_friend_scan_screen.dart';
+import 'screens/connections_screen.dart';
 
 class EventosBarranquillaApp extends StatelessWidget {
   const EventosBarranquillaApp({super.key});
@@ -215,6 +216,10 @@ class EventosBarranquillaApp extends StatelessWidget {
         GoRoute(
           path: '/add-friend/scan',
           builder: (context, state) => const AddFriendScanScreen(),
+        ),
+        GoRoute(
+          path: '/connections',
+          builder: (context, state) => const ConnectionsScreen(),
         ),
       ],
     );

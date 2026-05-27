@@ -6,6 +6,7 @@ class User {
   final String? profilePicture;
   final List<String> favorites;
   final List<String> attendedEvents;
+  final List<String> following;
 
   User({
     required this.id,
@@ -15,8 +16,10 @@ class User {
     this.profilePicture,
     List<String>? favorites,
     List<String>? attendedEvents,
+    List<String>? following,
   })  : favorites = favorites ?? [],
-        attendedEvents = attendedEvents ?? [];
+        attendedEvents = attendedEvents ?? [],
+        following = following ?? [];
 
   String get normalizedRole => role.trim().toLowerCase();
 
@@ -33,6 +36,7 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     final favorites = json['favorites'];
     final attended = json['attended_events'] ?? json['attendedEvents'];
+    final following = json['following'];
     return User(
       id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
@@ -47,6 +51,9 @@ class User {
       attendedEvents: attended is List
           ? attended.map((item) => item.toString()).toList()
           : [],
+        following: following is List
+          ? following.map((item) => item.toString()).toList()
+          : [],
     );
   }
 
@@ -59,6 +66,7 @@ class User {
       'profile_picture_url': profilePicture,
       'favorites': favorites,
       'attended_events': attendedEvents,
+      'following': following,
     };
   }
 }
