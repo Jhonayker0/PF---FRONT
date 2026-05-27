@@ -124,9 +124,10 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.group_outlined,
                   onTap: () => context.push('/refer-organizer'),
                 ),
-                const _ProfileListItem(
-                  text: 'Encuentra coanfitrion',
+                _ProfileListItem(
+                  text: 'Anadir amigo',
                   icon: Icons.groups_2_outlined,
+                  onTap: () => context.push('/add-friend'),
                 ),
                 if (isLoggedIn)
                   _ProfileListItem(

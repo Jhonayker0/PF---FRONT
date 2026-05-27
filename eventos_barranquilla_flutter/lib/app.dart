@@ -20,6 +20,7 @@ import 'screens/smart_id_usuario.dart';
 import 'screens/scan_payment_screen.dart';
 import 'screens/support_screen.dart';
 import 'screens/refer_organizer_screen.dart';
+import 'screens/add_friend_screen.dart';
 
 class EventosBarranquillaApp extends StatelessWidget {
   const EventosBarranquillaApp({super.key});
@@ -205,6 +206,10 @@ class EventosBarranquillaApp extends StatelessWidget {
         GoRoute(
           path: '/refer-organizer',
           builder: (context, state) => const ReferOrganizerScreen(),
+        ),
+        GoRoute(
+          path: '/add-friend',
+          builder: (context, state) => const AddFriendScreen(),
         ),
       ],
     );
