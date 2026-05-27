@@ -105,7 +105,11 @@ class ProfileScreen extends StatelessWidget {
                     }
                   },
                 ),
-                const _ProfileListItem(text: 'Ayuda', icon: Icons.help_outline),
+                _ProfileListItem(
+                  text: 'Ayuda',
+                  icon: Icons.help_outline,
+                  onTap: () => context.push('/support'),
+                ),
                 const _ProfileListItem(
                   text: 'Ver perfil',
                   icon: Icons.person_outline,
@@ -122,10 +126,6 @@ class ProfileScreen extends StatelessWidget {
                 const _ProfileListItem(
                   text: 'Encuentra coanfitrion',
                   icon: Icons.groups_2_outlined,
-                ),
-                const _ProfileListItem(
-                  text: 'Legal',
-                  icon: Icons.menu_book_outlined,
                 ),
                 if (isLoggedIn)
                   _ProfileListItem(
