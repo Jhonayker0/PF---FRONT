@@ -22,4 +22,12 @@ class ApiConfig {
     }
     return 'https://back-cumbe-pay.onrender.com';
   }
+
+  static String get recsBaseUrl {
+    const value = String.fromEnvironment('RECS_API_BASE_URL');
+    if (value.isNotEmpty) {
+      return value;
+    }
+    return 'https://back-cumbe-recs.onrender.com';
+  }
 }

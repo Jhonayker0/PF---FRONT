@@ -15,13 +15,26 @@ import 'user_service.dart';
 
 class EventService {
   EventService({ApiClient? client})
-      : _client = client ?? ApiClient(ApiConfig.eventBaseUrl);
+      : _client = client ?? ApiClient(ApiConfig.eventBaseUrl),
+        _recsClient = ApiClient(ApiConfig.recsBaseUrl);
 
   final ApiClient _client;
+  final ApiClient _recsClient;
   final UserService _userService = UserService();
 
   Future<List<Event>> fetchPopularEvents() async {
     final data = await _client.getJson('/events/popular');
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(Event.fromJson)
+          .toList();
+    }
+    return [];
+  }
+
+  Future<List<Event>> fetchRecommendedEvents(String userId) async {
+    final data = await _recsClient.getJson('/recs/$userId');
     if (data is List) {
       return data
           .whereType<Map<String, dynamic>>()

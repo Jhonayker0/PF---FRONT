@@ -61,7 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final popularEvents = await _eventService.fetchPopularEvents();
+      final authProvider = context.read<AuthProvider>();
+      final currentUser = authProvider.user;
+      final popularEvents = currentUser != null
+          ? await _eventService.fetchRecommendedEvents(currentUser.id)
+          : await _eventService.fetchPopularEvents();
       final categories = await Future.wait(
         EventCategories.generalCategories.map((category) async {
           final events = await _eventService.fetchEventsByCategory(category);
